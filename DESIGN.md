@@ -44,7 +44,8 @@ Everything is shown through the body and the world:
   bottom-left and sways as you step. A charged gem is lit red; a spent gem is a
   black, hollow socket.
 - **Deaths:** counted and **branded as a Roman numeral** on the **inner forearm of
-  the right arm** (I, II, III, …), in red.
+  the right arm** (I, II, III, …), in red. The right forearm is **always visible**
+  at the bottom-right, opposite the gauntlet.
 
 ## Exploration
 
@@ -69,7 +70,8 @@ Everything is shown through the body and the world:
 | L | Cast the equipped spell |
 
 - **Mana refills at the start of every fight** (all 3 gems).
-- **Health vials:** a few vials of blessed blood. Drinking one takes your turn.
+- **Parry window:** 10 frames normally, 6 frames under Sloth's lullaby curse.
+- **Health vials:** 3 vials of blessed blood. Drinking one takes your turn.
   Vials refill at the shrine.
 
 ## Spells and progression
@@ -115,9 +117,4 @@ stone. Organ and choir music only in boss duels. DirectSound through Maxmod
 
 ## Open items
 
-- When is the right forearm visible: always (bottom-right, opposite the gauntlet),
-  or only when the sword is raised in a duel?
-- The name and effect of the spell granted by Sloth.
-- The number of health vials (proposal: 3).
-- Parry window length in frames (proposal: 10 frames normally, 6 under Sloth's
-  lullaby).
+- The name and effect of the spell granted by Sloth (to be decided).
