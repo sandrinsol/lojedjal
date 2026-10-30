@@ -10,6 +10,19 @@ death brand on the right forearm, and a red hatched vignette for wounds. These a
 on preview keys until duels exist (SELECT wound, L spend gem, R restore).
 A swings the sword: wind-up, cut, follow-through, recovery.
 
+## Editing the map
+
+Open **/editor.html** on the game's site (linked from the player as "EDIT THE
+MAP"). Paint walls, window walls and floor, place the start and its facing, then
+**Play this map**: the page writes your layout into the ROM's map block and boots
+it, no rebuild needed. Your map stays saved in your browser; copy or download it
+as text.
+
+To make a map the game's own Stage I, put its text in `maps/drowned_abbey.txt`
+and run `make map` (or send the text to Claude to commit). Map text:
+`#` wall, `W` window wall, `.` floor, `^ > v <` start facing N / E / S / W;
+8 to 32 cells each way.
+
 ## Layout
 
 | Path | What |
@@ -20,8 +33,9 @@ A swings the sword: wind-up, cut, follow-through, recovery.
 | `tools/engrave_sprites.py` | Engraves the hands, gems, brand numerals, vignettes and title |
 | `tools/convert_art.mjs` | PNG → Butano `.bmp`/`.json` via the gb-gbc-gba-test-mcp converters (rejects any colour outside the palette) |
 | `assets/` → `graphics/` | Generated art → Butano imports |
-| `tests/` | Harness scripts: `play.mjs` (walkthrough), `strike.mjs` (sword swing), `mcp_check.mjs` (MCP `check` + `describe`), `vram_overlap.mjs` (reads every BG map to rule out real VRAM overlaps) |
-| `web/` | Static player site (EmulatorJS + mGBA) deployed to Vercel |
+| `tests/` | Harness scripts: `play.mjs` (walkthrough), `strike.mjs` (sword swing), `mcp_check.mjs` (MCP `check` + `describe`), `vram_overlap.mjs` (reads every BG map to rule out real VRAM overlaps), `map_patch.mjs` (patches a map in as the editor does and checks the start) |
+| `maps/` | Map text files; `tools/build_map.py` turns one into the ROM map block |
+| `web/` | Static player site (EmulatorJS + mGBA) and the map editor, deployed to Vercel |
 
 ## Build
 

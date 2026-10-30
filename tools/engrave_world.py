@@ -413,24 +413,20 @@ def write_header(path, base, panels):
 
 # ---------------------------------------------------------------------------
 
-SAMPLE = [
-    "1111111111111111",
-    "1210000200001201",
-    "1010110001101001",
-    "1000100000100011",
-    "1110101010101001",
-    "1000001010000021",
-    "1011111011111001",
-    "1200001010000001",
-    "1110101010111101",
-    "1000101010100001",
-    "1011101010101111",
-    "1000001010000001",
-    "1110121012111111",
-    "1000000010000001",
-    "1011111000111101",
-    "1111111211111111",
-]
+def load_map(path):
+    """Map text (see tools/build_map.py) -> grid of cell codes, start."""
+    rows = [r for r in open(path).read().split('\n') if r.strip()]
+    grid, start = [], None
+    for y, row in enumerate(rows):
+        line = []
+        for x, ch in enumerate(row):
+            if ch in '^>v<':
+                start = (x, y, '^>v<'.index(ch))
+            line.append({'#': WALL, 'W': WINDOW}.get(ch, 0))
+        grid.append(line)
+    return grid, start
+
+
 
 
 def main():
@@ -452,7 +448,7 @@ def main():
     if args.preview:
         out = os.path.join(ROOT, 'build', 'preview')
         os.makedirs(out, exist_ok=True)
-        grid = [[int(c) for c in row] for row in SAMPLE]
+        grid, start = load_map(os.path.join(ROOT, 'maps', 'drowned_abbey.txt'))
         views = [(7, 14, 0, 'nave'), (7, 13, 3, 'aisle'), (7, 7, 0, 'window'),
                  (13, 5, 1, 'chapel'), (1, 13, 0, 'west')]
         for x, y, f, name in views:

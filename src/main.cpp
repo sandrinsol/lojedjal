@@ -34,6 +34,7 @@
 
 #include "septem_level.h"
 #include "septem_view.h"
+#include "gen/septem_map.h"
 
 volatile int player_x = 0, player_y = 0, facing = 0;
 volatile int wounds = 0;      // 0 unhurt .. 3 one blow from death
@@ -365,5 +366,7 @@ int main()
     bn::bg_palettes::set_transparent_color(bn::color(0, 0, 0));
 
     title_screen();
-    explore(septem::drowned_abbey);
+    static septem::level stage;
+    stage.load(septem::gen::stage_map);
+    explore(stage);
 }

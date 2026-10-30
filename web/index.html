@@ -31,6 +31,9 @@
 <body>
   <h1>SEPTEM</h1>
   <div class="rule"></div>
+  <div id="mapline" style="font-size:14px;margin-bottom:12px;letter-spacing:0.15em">
+    STAGE I · THE DROWNED ABBEY · <a href="editor.html" style="color:inherit">EDIT THE MAP</a>
+  </div>
   <div id="stage">
     <div id="game"></div>
     <button id="begin" type="button">ENTER THE ABBEY</button>
@@ -52,13 +55,33 @@
     <a href="NOTICE.md" style="color:inherit">NOTICE.md</a>).
   </p>
 
+  <script src="septem-map.js"></script>
   <script>
-    document.getElementById('begin').addEventListener('click', (e) => {
+    // ?map=custom plays the map from the editor, patched into the ROM here.
+    const custom = new URLSearchParams(location.search).get('map') === 'custom';
+    let customMap = null;
+    if (custom) {
+      try {
+        customMap = SeptemMap.parse(SeptemMap.loadSaved() || '');
+        document.getElementById('mapline').innerHTML =
+          `YOUR MAP · ${customMap.width} × ${customMap.height} · <a href="editor.html" style="color:inherit">BACK TO THE EDITOR</a> · <a href="./" style="color:inherit">THE ABBEY</a>`;
+      } catch (err) {
+        document.getElementById('mapline').textContent = `Could not load your map (${err.message}); playing the abbey.`;
+      }
+    }
+
+    async function romUrl() {
+      if (!customMap) return 'septem.gba';
+      const rom = new Uint8Array(await (await fetch('septem.gba', { cache: 'no-cache' })).arrayBuffer());
+      return URL.createObjectURL(new Blob([SeptemMap.patch(rom, customMap)], { type: 'application/octet-stream' }));
+    }
+
+    document.getElementById('begin').addEventListener('click', async (e) => {
       e.currentTarget.remove();
+      window.EJS_gameUrl = await romUrl();
       window.EJS_player = '#game';
       window.EJS_core = 'gba';
       window.EJS_gameName = 'SEPTEM';
-      window.EJS_gameUrl = 'septem.gba';
       window.EJS_pathtodata = 'data/';
       window.EJS_startOnLoaded = true;
       window.EJS_color = '#D00024';

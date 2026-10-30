@@ -17,14 +17,48 @@ namespace septem
     constexpr int dir_x[4] = { 0, 1, 0, -1 };
     constexpr int dir_y[4] = { -1, 0, 1, 0 };
 
-    struct level
+    constexpr int max_map_size = 32;
+
+    // A map as stored in the ROM (generated from maps/*.txt by
+    // tools/build_map.py; patched in place by the web map editor).
+    struct map_block
     {
-        int width;
-        int height;
-        const char* rows;   // '#' wall, 'W' wall with a lancet window, '.' floor
-        int start_x;
-        int start_y;
-        int start_facing;
+        char magic[8];      // "SEPTMAP1"
+        uint8_t width;
+        uint8_t height;
+        uint8_t start_x;
+        uint8_t start_y;
+        uint8_t start_facing;
+        uint8_t pad[3];
+        char cells[max_map_size * max_map_size];   // '#' wall, 'W' window wall, '.' floor
+    };
+
+    class level
+    {
+
+    public:
+        int width = 0;
+        int height = 0;
+        int start_x = 0;
+        int start_y = 0;
+        int start_facing = 0;
+
+        // Copies a map from the ROM. The volatile read keeps the compiler from
+        // folding the layout into the code, so a patched ROM always takes effect.
+        void load(const map_block& block)
+        {
+            const volatile map_block& source = block;
+            width = clamp_size(source.width);
+            height = clamp_size(source.height);
+            start_x = source.start_x;
+            start_y = source.start_y;
+            start_facing = source.start_facing & 3;
+
+            for(int i = 0, limit = width * height; i < limit; ++i)
+            {
+                _cells[i] = source.cells[i];
+            }
+        }
 
         [[nodiscard]] cell at(int x, int y) const
         {
@@ -33,38 +67,25 @@ namespace septem
                 return WALL;
             }
 
-            switch(rows[y * width + x])
+            switch(_cells[y * width + x])
             {
-            case '#':
-                return WALL;
+            case '.':
+                return OPEN;
             case 'W':
                 return WINDOW;
             default:
-                return OPEN;
+                return WALL;
             }
         }
+
+    private:
+        char _cells[max_map_size * max_map_size] = {};
+
+        static int clamp_size(int size)
+        {
+            return size < 1 ? 1 : size > max_map_size ? max_map_size : size;
+        }
     };
-
-    // Stage I - Sloth: the Drowned Abbey (first sketch of the layout).
-    inline constexpr char drowned_abbey_rows[] =
-        "################"
-        "#W#....W....#W.#"
-        "#.#.##...##.#..#"
-        "#...#.....#...##"
-        "###.#.#.#.#.#..#"
-        "#.....#.#.....W#"
-        "#.#####.#####..#"
-        "#W....#.#......#"
-        "###.#.#.#.####.#"
-        "#...#.#.#.#....#"
-        "#.###.#.#.#.####"
-        "#.....#.#......#"
-        "###.#W#.#W######"
-        "#.......#......#"
-        "#.#####...####.#"
-        "#######W########";
-
-    inline constexpr level drowned_abbey = { 16, 16, drowned_abbey_rows, 7, 14, 0 };
 }
 
 #endif
