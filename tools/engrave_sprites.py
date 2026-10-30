@@ -219,15 +219,13 @@ def forearm():
         [(13, 23), (25, 15), (28, 19), (16, 27)],
         [(16, 27), (28, 19), (30, 23), (19, 31)],
     ]
-    # Fist (seen from the palm side), knuckles up, and the grip of the sword.
+    # Fist (seen from the palm side), knuckles up, closed on the sword's grip.
     fist = [(6, 16), (8, 6), (18, 1), (26, 4), (28, 13), (22, 18), (12, 21)]
-    grip = [(0, 6), (4, 2), (12, 10), (8, 14)]
-    sleeve, arm, fist, grip = (scaled(p, K) for p in (sleeve, arm, fist, grip))
+    sleeve, arm, fist = (scaled(p, K) for p in (sleeve, arm, fist))
     wraps = [scaled(w, K) for w in wraps]
     engrave_part(c, poly_mask(W, H, arm), -40, 0.24, curve=1.0)
     for w in wraps:
         engrave_part(c, poly_mask(W, H, w), 55, 0.42, spacing=2.2)
-    engrave_part(c, poly_mask(W, H, grip), 45, 0.7)
     engrave_part(c, poly_mask(W, H, fist), -30, 0.38, curve=1.0)
     # Finger creases across the fist.
     for k in range(3):
@@ -252,9 +250,72 @@ GAUNTLET_AT = (-6, 160 - 92)
 FOREARM_AT = (240 - 100, 160 - 92)
 
 
+# The sword: raised in the right fist, the blade rising along the right side of
+# the view so the corridor stays clear. Screen space.
+SWORD_BASE = (169, 66)    # centre of the crossguard
+SWORD_TIP = (209, -4)     # off the top edge: the blade runs out of frame
+
+
+def sword(c):
+    """Cut a longsword into the 256x256 hands canvas (screen + (8, 48))."""
+    S = c.shape[0]
+    bx, by = SWORD_BASE
+    tx, ty = SWORD_TIP
+    dx, dy = tx - bx, ty - by
+    ln = math.hypot(dx, dy)
+    ux, uy = dx / ln, dy / ln          # along the blade
+    nx, ny = -uy, ux                   # across the blade
+    o = lambda x, y: (x + 8, y + 48)   # screen -> canvas
+
+    # Blade: broad at the ricasso, tapering to the point.
+    w0, w1 = 6.5, 2.2
+    base = (bx + ux * 2, by + uy * 2)
+    blade = [o(base[0] + nx * w0, base[1] + ny * w0), o(tx + nx * w1, ty + ny * w1),
+             o(tx + ux * 4, ty + uy * 4), o(tx - nx * w1, ty - ny * w1),
+             o(base[0] - nx * w0, base[1] - ny * w0)]
+    m = poly_mask(S, S, blade)
+    ys, xs = np.mgrid[0:S, 0:S].astype(np.float64)
+    across = (xs - (bx + 8)) * nx + (ys - (by + 48)) * ny
+    along = (xs - (bx + 8)) * ux + (ys - (by + 48)) * uy
+    half = w0 + (w1 - w0) * np.clip(along / ln, 0, 1)
+    rel = across / np.maximum(half, 0.5)          # -1 .. 1 across the blade
+    # Steel: the edge towards the light is bare paper, the far bevel is cut
+    # with fine lines along the blade, and the fuller is a black groove.
+    tone = np.where(rel < 0, 0.05, 0.75) + np.clip(along / ln, 0, 1) * 0.12
+    phase = along / 2.0
+    dark = ((phase - np.floor(phase)) < tone) & (rel >= 0)
+    dash = ((along / 5.0) % 1.0) < 0.35
+    dark |= (rel < 0) & (rel > -0.75) & dash & (((across / 2.0) % 1.0) < 0.5)
+    fuller = (np.abs(rel + 0.05) < 0.14) & (along > 3) & (along < ln * 0.75)
+    out = np.where(dark | fuller, BLACK, WHITE)
+    edge = m & ~ndimage.binary_erosion(m)
+    out = np.where(edge, BLACK, out)
+    c[m] = out[m]
+
+    # Crossguard: a straight gothic bar with drooping quillon ends.
+    g = 19.0
+    guard = [o(bx + nx * g + ux * 2.6, by + ny * g + uy * 2.6),
+             o(bx - nx * g + ux * 2.6, by - ny * g + uy * 2.6),
+             o(bx - nx * (g + 2) - ux * 3, by - ny * (g + 2) - uy * 3),
+             o(bx - nx * (g - 2) - ux * 2.2, by - ny * (g - 2) - uy * 2.2),
+             o(bx + nx * (g - 2) - ux * 2.2, by + ny * (g - 2) - uy * 2.2),
+             o(bx + nx * (g + 2) - ux * 3, by + ny * (g + 2) - uy * 3)]
+    engrave_part(c, poly_mask(S, S, guard), math.degrees(math.atan2(ny, nx)), 0.5, spacing=2.0)
+    # Grip below the guard, into the fist (the fist is drawn over it).
+    grip = [o(bx + nx * 2.6, by + ny * 2.6), o(bx - nx * 2.6, by - ny * 2.6),
+            o(bx - nx * 2.6 - ux * 16, by - ny * 2.6 - uy * 16),
+            o(bx + nx * 2.6 - ux * 16, by + ny * 2.6 - uy * 16)]
+    engrave_part(c, poly_mask(S, S, grip), math.degrees(math.atan2(uy, ux)) + 90, 0.72, spacing=2.0)
+    return c
+
+
 def hands():
     S = 256
     c = np.zeros((S, S), np.uint8)
+    sword(c)
+    # Black margin round the steel so it reads against the walls.
+    m = c != T
+    c[ndimage.binary_dilation(m, iterations=2) & ~m] = BLACK
     for img, (x, y) in ((gauntlet(), GAUNTLET_AT), (forearm(), FOREARM_AT)):
         h, w = img.shape
         X, Y = x + 8, y + 48
