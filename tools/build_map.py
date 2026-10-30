@@ -4,6 +4,7 @@
 Map text, one row per line, all rows the same width (8..32), 8..32 rows:
   #  wall            W  wall with a lancet window
   .  floor           ^ > v <  the start, facing north / east / south / west
+  M  a Somnolent Monk standing on the floor
 
 The block starts with the magic "SEPTMAP1" so the web map editor can find it
 in septem.gba and patch a new layout in without rebuilding (web/editor.html).
@@ -36,7 +37,7 @@ def parse(text):
                     raise ValueError('more than one start (^ > v <)')
                 start = (x, y, FACINGS[ch])
                 ch = '.'
-            if ch not in '#W.':
+            if ch not in '#W.M':
                 raise ValueError(f'unknown cell {ch!r} at row {y + 1}, column {x + 1}')
             cells.append(ch)
     if not start:

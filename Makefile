@@ -52,4 +52,5 @@ map:
 art: map
 	$(PYTHON) tools/engrave_world.py
 	$(PYTHON) tools/engrave_sprites.py
+	$(PYTHON) tools/engrave_monk.py
 	node tools/convert_art.mjs

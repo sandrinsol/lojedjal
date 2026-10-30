@@ -49,6 +49,7 @@
         <button data-tool="W" aria-pressed="false"><kbd>2</kbd> Window wall</button>
         <button data-tool="." aria-pressed="false"><kbd>3</kbd> Floor</button>
         <button data-tool="S" aria-pressed="false"><kbd>4</kbd> Start</button>
+        <button data-tool="M" aria-pressed="false"><kbd>5</kbd> Monk</button>
       </div>
       <div class="legend">
         Click or drag to paint. Right-click paints floor.
@@ -79,6 +80,7 @@
         <span class="sw" style="background:#000;border-color:#d00024"></span>window wall
         <span class="sw" style="background:#000"></span>floor
         <span class="sw" style="background:#d00024"></span>start
+        <span class="sw" style="background:#000;border-radius:50%"></span>monk
         · faint red: floor the player can't reach
       </div>
       <button class="primary" id="play" type="button" style="min-width:240px">PLAY THIS MAP</button>
@@ -86,7 +88,7 @@
 
     <div class="panel">
       <h2>MAP TEXT</h2>
-      <div class="legend"><kbd>#</kbd> wall · <kbd>W</kbd> window · <kbd>.</kbd> floor · <kbd>^ &gt; v &lt;</kbd> start facing N / E / S / W</div>
+      <div class="legend"><kbd>#</kbd> wall · <kbd>W</kbd> window · <kbd>.</kbd> floor · <kbd>M</kbd> monk · <kbd>^ &gt; v &lt;</kbd> start facing N / E / S / W</div>
       <textarea id="text" spellcheck="false" aria-label="Map as text"></textarea>
       <div class="row">
         <button id="apply" type="button">Apply text</button>
@@ -133,7 +135,7 @@
           const nx = x + dx, ny = y + dy;
           if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue;
           const k = ny * map.width + nx;
-          if (map.cells[ny][nx] === '.' && !seen.has(k)) { seen.add(k); q.push([nx, ny]); }
+          if ('.M'.includes(map.cells[ny][nx]) && !seen.has(k)) { seen.add(k); q.push([nx, ny]); }
         }
       }
       return seen;
@@ -168,6 +170,14 @@
           } else {
             ctx.fillStyle = '#000000';
             ctx.fillRect(px, py, CELL, CELL);
+            if (c === 'M') {
+              // A hooded monk: white cowl and robe, black face.
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath(); ctx.arc(px + 11, py + 8, 5, 0, Math.PI * 2); ctx.fill();
+              ctx.beginPath(); ctx.moveTo(px + 5, py + 20); ctx.lineTo(px + 8, py + 11); ctx.lineTo(px + 14, py + 11); ctx.lineTo(px + 17, py + 20); ctx.fill();
+              ctx.fillStyle = '#000000';
+              ctx.beginPath(); ctx.arc(px + 11, py + 9, 2.4, 0, Math.PI * 2); ctx.fill();
+            }
             if (!reach.has(y * map.width + x)) {
               lost++;
               ctx.fillStyle = '#d0002440';
@@ -195,7 +205,8 @@
       const text = M.serialize(toMap(map));
       if (document.activeElement !== textEl) textEl.value = text;
       M.save(text);
-      setStatus(`${map.width} × ${map.height} · start ${s.x},${s.y} facing ${'NESW'[s.facing]}` +
+      const monks = map.cells.reduce((n, row) => n + row.filter((c) => c === 'M').length, 0);
+      setStatus(`${map.width} × ${map.height} · start ${s.x},${s.y} facing ${'NESW'[s.facing]} · ${monks} monk${monks === 1 ? '' : 's'}` +
         (lost ? ` · ${lost} floor cell${lost > 1 ? 's' : ''} unreachable` : ''));
     }
 
@@ -213,13 +224,13 @@
 
     function paint(p, t) {
       if (t === 'S') {
-        if (map.cells[p.y][p.x] !== '.') { setStatus('The start must be on a floor cell', true); return; }
+        if (map.cells[p.y][p.x] !== '.') { setStatus('The start must be on an empty floor cell', true); return; }
         if (map.start.x === p.x && map.start.y === p.y) map.start.facing = (map.start.facing + 1) & 3;
         else map.start = { x: p.x, y: p.y, facing: map.start.facing };
         draw();
         return;
       }
-      if (map.start.x === p.x && map.start.y === p.y && t !== '.') { setStatus('Move the start before walling its cell', true); return; }
+      if (map.start.x === p.x && map.start.y === p.y && t !== '.') { setStatus('Move the start before changing its cell', true); return; }
       if (map.cells[p.y][p.x] === t) return;
       map.cells[p.y][p.x] = t;
       draw();
@@ -253,6 +264,7 @@
       else if (e.key === '2') selectTool('W');
       else if (e.key === '3') selectTool('.');
       else if (e.key === '4') selectTool('S');
+      else if (e.key === '5') selectTool('M');
       else if (e.key === 'r' || e.key === 'R') { remember(); map.start.facing = (map.start.facing + 1) & 3; draw(); }
       else if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
     });

@@ -9,7 +9,11 @@
     "facing:s32",
     "wounds:s32",
     "gems:s32",
-    "deaths:s32"
+    "deaths:s32",
+    "hp:s32",
+    "vials:s32",
+    "duel_state:s32",
+    "enemy_hp:s32"
   ],
   "frameCounter": "frame_counter",
   "cpuUsage": "cpu_usage"

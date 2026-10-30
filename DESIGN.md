@@ -74,6 +74,21 @@ Everything is shown through the body and the world:
 - **Health vials:** 3 vials of blessed blood. Drinking one takes your turn.
   Vials refill at the shrine.
 
+### Duel numbers (Somnolent Monk, first build)
+
+| | |
+|---|---|
+| Player health | 12; the red vignette deepens every 3 lost (4 monk blows kill) |
+| Monk blow | 3 damage, 1 under WARD |
+| Monk health | 4; a strike deals 1, a riposte after a parry 2 |
+| Monk wind-up | holds the censer 30–90 frames (uneven, to bait a flinch) |
+| The blow | 18 frames falling; R parries in the last 10; R earlier is a flinch |
+| Vial | +6 health, takes your turn (3 per life) |
+| WARD | 1 gem, softens the next 2 blows |
+
+The player acts first; after each action the monk takes his turn. Monks block
+movement and are seen down a corridor up to 4 cells away.
+
 ## Spells and progression
 
 - Only **one spell** is equipped at a time.

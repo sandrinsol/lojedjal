@@ -1,7 +1,7 @@
 // SEPTEM map text <-> ROM map block. Shared by editor.html and index.html.
 //
 // Map text: one row per line, 8..32 rows of 8..32 cells.
-//   #  wall   W  wall with a lancet window   .  floor   ^ > v <  start + facing
+//   #  wall   W  wall with a lancet window   .  floor   M  monk   ^ > v <  start + facing
 // ROM block (see tools/build_map.py): "SEPTMAP1", width, height, start_x,
 // start_y, facing, 3 pad bytes, then 32*32 cell bytes.
 (function (global) {
@@ -26,7 +26,7 @@
           start = { x, y, facing: FACING.indexOf(ch) };
           return '.';
         }
-        if (!'#W.'.includes(ch)) throw new Error(`Unknown cell "${ch}" at row ${y + 1}, column ${x + 1}`);
+        if (!'#W.M'.includes(ch)) throw new Error(`Unknown cell "${ch}" at row ${y + 1}, column ${x + 1}`);
         return ch;
       }).join('');
     });
