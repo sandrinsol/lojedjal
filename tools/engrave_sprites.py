@@ -5,7 +5,8 @@ Forms are built from flat parts (plates, wraps, flesh). Each part is shaded by
 a light from above, then cut into hatching along its own direction, with a
 black contour and a white lit edge, like a burin engraving.
 
-  assets/hands.png      256x256 BG: left gauntlet + right forearm, drawn large
+  assets/hands.png      256x256 BG: the left gauntlet, drawn large
+  assets/arm_N.png      256x256 BG: right arm + sword; 0 rest, 1-4 the strike
   assets/gem.png        16x32   2 frames: lit (red) / spent (hollow)
   assets/brand.png      32x256  16 frames: blank, I .. XV, burned in red
   assets/vignette_N.png 256x256 health levels 1..3, red hatching from the edges
@@ -256,11 +257,11 @@ SWORD_BASE = (169, 66)    # centre of the crossguard
 SWORD_TIP = (209, -4)     # off the top edge: the blade runs out of frame
 
 
-def sword(c):
-    """Cut a longsword into the 256x256 hands canvas (screen + (8, 48))."""
+def sword(c, base=SWORD_BASE, tip=SWORD_TIP):
+    """Cut a longsword into a 256x256 BG canvas (screen + (8, 48))."""
     S = c.shape[0]
-    bx, by = SWORD_BASE
-    tx, ty = SWORD_TIP
+    bx, by = base
+    tx, ty = tip
     dx, dy = tx - bx, ty - by
     ln = math.hypot(dx, dy)
     ux, uy = dx / ln, dy / ln          # along the blade
@@ -309,25 +310,128 @@ def sword(c):
     return c
 
 
+def paste(c, img, at):
+    h, w = img.shape
+    X, Y = at[0] + 8, at[1] + 48
+    sx0, sy0 = max(0, -X), max(0, -Y)
+    dst = c[Y + sy0:Y + h, X + sx0:X + w]
+    src = img[sy0:sy0 + dst.shape[0], sx0:sx0 + dst.shape[1]]
+    dst[src != T] = src[src != T]
+
+
+def outline(c, width=2):
+    m = c != T
+    c[ndimage.binary_dilation(m, iterations=width) & ~m] = BLACK
+
+
 def hands():
+    """hands.png: the left gauntlet. arm_0.png: the right arm at rest."""
     S = 256
     c = np.zeros((S, S), np.uint8)
-    sword(c)
-    # Black margin round the steel so it reads against the walls.
-    m = c != T
-    c[ndimage.binary_dilation(m, iterations=2) & ~m] = BLACK
-    for img, (x, y) in ((gauntlet(), GAUNTLET_AT), (forearm(), FOREARM_AT)):
-        h, w = img.shape
-        X, Y = x + 8, y + 48
-        sx0, sy0 = max(0, -X), max(0, -Y)
-        dst = c[Y + sy0:Y + h, X + sx0:X + w]
-        src = img[sy0:sy0 + dst.shape[0], sx0:sx0 + dst.shape[1]]
-        dst[src != T] = src[src != T]
+    paste(c, gauntlet(), GAUNTLET_AT)
     save(c, 'hands.png')
+
+    c = np.zeros((S, S), np.uint8)
+    sword(c)
+    outline(c)
+    paste(c, forearm(), FOREARM_AT)
+    save(c, 'arm_0.png')
     # Screen positions of the gem centres and the brand, for the game code.
     gems = [(GAUNTLET_AT[0] + gx * K, GAUNTLET_AT[1] + gy * K) for gx, gy in GEM_SOCKETS]
     brand_at = (FOREARM_AT[0] + BRAND_POS[0] * K, FOREARM_AT[1] + BRAND_POS[1] * K)
     return gems, brand_at
+
+
+# ---------------------------------------------------------------------------
+# Strike: the right arm swings the sword from high right, across the view, to
+# low left. Each pose: wrist, blade direction, blade length, and the arc of
+# the swing (start and end blade angles) cut as engraved speed lines.
+# ---------------------------------------------------------------------------
+
+ELBOW = (262, 182)
+STRIKE_POSES = [
+    # wind-up: raised high on the right, blade cocked back over the shoulder
+    dict(wrist=(204, 62), dir=(0.42, -1.0), length=96, sweep=None),
+    # the cut: blade flat across the view
+    dict(wrist=(132, 100), dir=(-1.0, -0.22), length=104, sweep=(-100, -168)),
+    # follow-through: low left, blade running out of the bottom corner
+    dict(wrist=(74, 136), dir=(-0.78, 0.62), length=96, sweep=(-168, -218)),
+    # recovery: coming back up towards guard
+    dict(wrist=(160, 112), dir=(-0.18, -1.0), length=84, sweep=None),
+]
+
+
+def speed_lines(c, wrist, a0, a1, r0, r1):
+    """A fan of engraved arcs between blade angles a0..a1 (degrees)."""
+    S = c.shape[0]
+    ys, xs = np.mgrid[0:S, 0:S].astype(np.float64)
+    dx, dy = xs - (wrist[0] + 8), ys - (wrist[1] + 48)
+    r = np.hypot(dx, dy)
+    ang = np.degrees(np.arctan2(dy, dx))
+    lo, hi = min(a0, a1), max(a0, a1)
+    # Unwrap angles into the sweep's range.
+    ang = np.where(ang > hi, ang - 360, ang)
+    ang = np.where(ang < lo, ang + 360, ang)
+    inside = (ang >= lo) & (ang <= hi) & (r >= r0) & (r <= r1)
+    # Lines thin out away from the blade's end of the sweep.
+    t = (ang - a0) / (a1 - a0)            # 0 at the start, 1 at the blade
+    ring = (r / 4.0) % 1.0
+    dark = ring < 0.22 + 0.3 * np.clip(t, 0, 1)
+    # Broken towards the tail, as a burin lifting off the plate.
+    broken = ((ang * 0.9 + r * 0.3) % 6.0) < (6.0 * np.clip(t * 1.4, 0, 1))
+    c[inside & dark & broken] = BLACK
+    c[inside & ~dark & broken & (c == T)] = WHITE
+
+
+def arm_pose(wrist, d, length, sweep):
+    S = 256
+    c = np.zeros((S, S), np.uint8)
+    o = lambda x, y: (x + 8, y + 48)
+    ln = math.hypot(*d)
+    ux, uy = d[0] / ln, d[1] / ln
+    if sweep:
+        speed_lines(c, wrist, sweep[0], sweep[1], 24, length + 6)
+    guard = (wrist[0] + ux * 12, wrist[1] + uy * 12)
+    tip = (guard[0] + ux * length, guard[1] + uy * length)
+    sword(c, guard, tip)
+    outline(c)
+    # Forearm from the elbow (off screen, bottom right) to the wrist.
+    ex, ey = ELBOW
+    ax, ay = wrist[0] - ex, wrist[1] - ey
+    al = math.hypot(ax, ay)
+    nx, ny = -ay / al, ax / al
+    w0, w1 = 22, 12
+    arm = [o(ex + nx * w0, ey + ny * w0), o(wrist[0] + nx * w1, wrist[1] + ny * w1),
+           o(wrist[0] - nx * w1, wrist[1] - ny * w1), o(ex - nx * w0, ey - ny * w0)]
+    part = np.zeros_like(c)
+    engrave_part(part, poly_mask(S, S, arm), math.degrees(math.atan2(ay, ax)), 0.3, curve=1.0)
+    # Linen wraps just behind the wrist.
+    for k in range(2):
+        f0, f1 = 0.08 + k * 0.09, 0.15 + k * 0.09
+        p0 = (wrist[0] - ax * f0, wrist[1] - ay * f0)
+        p1 = (wrist[0] - ax * f1, wrist[1] - ay * f1)
+        ww = w1 + 2 + k * 2
+        wrap = [o(p0[0] + nx * ww, p0[1] + ny * ww), o(p1[0] + nx * ww, p1[1] + ny * ww),
+                o(p1[0] - nx * ww, p1[1] - ny * ww), o(p0[0] - nx * ww, p0[1] - ny * ww)]
+        engrave_part(part, poly_mask(S, S, wrap), math.degrees(math.atan2(ay, ax)) + 60, 0.45, spacing=2.2)
+    # Ragged sleeve where the arm leaves the frame.
+    sl = (ex - ax * 0.18, ey - ay * 0.18)
+    sleeve = [o(ex + nx * 30, ey + ny * 30), o(sl[0] + nx * 26, sl[1] + ny * 26),
+              o(sl[0] + ax * 0.05, sl[1] + ay * 0.05), o(sl[0] - nx * 26, sl[1] - ny * 26),
+              o(ex - nx * 30, ey - ny * 30)]
+    engrave_part(part, poly_mask(S, S, sleeve), 100, 0.66, curve=0.5)
+    # The fist, closed over the grip.
+    fist = ellipse_mask(S, S, (wrist[0] + 8 - 13, wrist[1] + 48 - 11, wrist[0] + 8 + 13, wrist[1] + 48 + 11))
+    engrave_part(part, fist, math.degrees(math.atan2(uy, ux)), 0.4, curve=1.0)
+    outline(part)
+    c[part != T] = part[part != T]
+    return c
+
+
+def strike():
+    for i, pose in enumerate(STRIKE_POSES, start=1):
+        save(arm_pose(pose['wrist'], pose['dir'], pose['length'], pose['sweep']), f'arm_{i}.png')
+
 
 
 ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
@@ -441,6 +545,7 @@ def title():
 
 def main():
     gems, brand_at = hands()
+    strike()
     gem()
     brand()
     for lv in (1, 2, 3):

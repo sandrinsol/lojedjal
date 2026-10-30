@@ -6,6 +6,8 @@
 //   right forearm  - deaths branded as a Roman numeral
 //   screen edges   - red hatching bleeds in as health drops
 //
+// A swings the sword (wind-up, cut, follow-through, recovery).
+//
 // The globals below are read by name by the gb-gbc-gba-test harness
 // (gbtest.json `watch`), so they are volatile and live at global scope.
 #include "bn_core.h"
@@ -18,6 +20,11 @@
 #include "bn_array.h"
 
 #include "bn_regular_bg_items_hands.h"
+#include "bn_regular_bg_items_arm_0.h"
+#include "bn_regular_bg_items_arm_1.h"
+#include "bn_regular_bg_items_arm_2.h"
+#include "bn_regular_bg_items_arm_3.h"
+#include "bn_regular_bg_items_arm_4.h"
 #include "bn_regular_bg_items_title.h"
 #include "bn_regular_bg_items_vignette_1.h"
 #include "bn_regular_bg_items_vignette_2.h"
@@ -33,6 +40,7 @@ volatile int wounds = 0;      // 0 unhurt .. 3 one blow from death
 volatile int gems = 3;        // lit mana gems
 volatile int deaths = 0;      // branded on the right forearm
 volatile int game_state = 0;  // 0 title, 1 exploring
+volatile int arm_pose = 0;    // 0 at rest, 1-4 the frames of a strike
 volatile unsigned frame_counter = 0;
 volatile int cpu_usage = 0;
 
@@ -54,6 +62,28 @@ namespace
 
     // Holding the D-pad keeps walking at this pace.
     constexpr int step_repeat_frames = 16;
+
+    // The strike (A): wind-up, the cut, follow-through, recovery.
+    const bn::regular_bg_item* arm_items[] = {
+        &bn::regular_bg_items::arm_0, &bn::regular_bg_items::arm_1, &bn::regular_bg_items::arm_2,
+        &bn::regular_bg_items::arm_3, &bn::regular_bg_items::arm_4,
+    };
+
+    struct strike_frame
+    {
+        int pose;
+        int frames;
+        int shake;
+    };
+
+    constexpr strike_frame strike_frames[] = {
+        { 1, 6, 0 },
+        { 2, 3, 2 },
+        { 3, 6, 1 },
+        { 4, 5, 0 },
+    };
+
+    constexpr int strike_steps = sizeof(strike_frames) / sizeof(strike_frames[0]);
 
     void update()
     {
@@ -79,6 +109,7 @@ namespace
     public:
         body() :
             _hands(bn::regular_bg_items::hands.create_bg(0, 0)),
+            _arm(bn::regular_bg_items::arm_0.create_bg(0, 0)),
             _gems({
                 bn::sprite_items::gem.create_sprite(gem_x[0] - 120, gem_y[0] - 80),
                 bn::sprite_items::gem.create_sprite(gem_x[1] - 120, gem_y[1] - 80),
@@ -87,6 +118,9 @@ namespace
             _brand(bn::sprite_items::brand.create_sprite(brand_x - 120, brand_y - 80))
         {
             _hands.set_priority(1);
+            _hands.set_z_order(1);
+            _arm.set_priority(1);
+            _arm.set_z_order(0);
 
             for(bn::sprite_ptr& gem : _gems)
             {
@@ -100,6 +134,50 @@ namespace
         void step()
         {
             _bob = 0;
+        }
+
+        [[nodiscard]] bool striking() const
+        {
+            return _strike_step < strike_steps;
+        }
+
+        void strike()
+        {
+            if(! striking())
+            {
+                _strike_step = 0;
+                _strike_wait = 0;
+            }
+        }
+
+        // Advances the strike; returns the view shake for this frame.
+        int update_strike()
+        {
+            if(! striking())
+            {
+                return 0;
+            }
+
+            const strike_frame& frame = strike_frames[_strike_step];
+
+            if(_strike_wait == 0)
+            {
+                _set_arm(frame.pose);
+            }
+
+            int shake = frame.shake && (_strike_wait & 1) ? frame.shake : -frame.shake;
+
+            if(++_strike_wait >= frame.frames)
+            {
+                _strike_wait = 0;
+
+                if(++_strike_step == strike_steps)
+                {
+                    _set_arm(0);
+                }
+            }
+
+            return shake;
         }
 
         void refresh()
@@ -145,6 +223,7 @@ namespace
             }
 
             _hands.set_y(offset);
+            _arm.set_y(offset);
 
             for(int i = 0; i < max_gems; ++i)
             {
@@ -155,11 +234,22 @@ namespace
         }
 
     private:
+        void _set_arm(int pose)
+        {
+            arm_pose = pose;
+            _arm.set_item(*arm_items[pose]);
+            // The brand is burned on the resting forearm; mid-swing it turns away.
+            _brand.set_visible(pose == 0);
+        }
+
         bn::regular_bg_ptr _hands;
+        bn::regular_bg_ptr _arm;
         bn::array<bn::sprite_ptr, 3> _gems;
         bn::sprite_ptr _brand;
         bn::optional<bn::regular_bg_ptr> _vignette;
         int _bob = bob_frames;
+        int _strike_step = strike_steps;
+        int _strike_wait = 0;
     };
 
     void explore(const septem::level& lv)
@@ -180,7 +270,16 @@ namespace
             bool redraw = false;
             int move = 0;
 
-            if(bn::keypad::left_pressed())
+            if(bn::keypad::a_pressed())
+            {
+                hands.strike();
+            }
+
+            if(hands.striking())
+            {
+                // Committed to the blow: no turning or stepping mid-swing.
+            }
+            else if(bn::keypad::left_pressed())
             {
                 facing = (facing + 3) & 3;
                 redraw = true;
@@ -253,6 +352,7 @@ namespace
                 view.draw(lv, player_x, player_y, facing);
             }
 
+            view.set_shake(0, hands.update_strike());
             hands.update();
             update();
         }

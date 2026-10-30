@@ -8,6 +8,7 @@ The design is in [DESIGN.md](DESIGN.md).
 The HUD-less interface is in place: three mana gems on the left gauntlet, the
 death brand on the right forearm, and a red hatched vignette for wounds. These are
 on preview keys until duels exist (SELECT wound, L spend gem, R restore).
+A swings the sword: wind-up, cut, follow-through, recovery.
 
 ## Layout
 
@@ -19,7 +20,7 @@ on preview keys until duels exist (SELECT wound, L spend gem, R restore).
 | `tools/engrave_sprites.py` | Engraves the hands, gems, brand numerals, vignettes and title |
 | `tools/convert_art.mjs` | PNG → Butano `.bmp`/`.json` via the gb-gbc-gba-test-mcp converters (rejects any colour outside the palette) |
 | `assets/` → `graphics/` | Generated art → Butano imports |
-| `tests/` | Harness scripts: `play.mjs` (walkthrough screenshots), `mcp_check.mjs` (MCP `check` + `describe`) |
+| `tests/` | Harness scripts: `play.mjs` (walkthrough), `strike.mjs` (sword swing), `mcp_check.mjs` (MCP `check` + `describe`), `vram_overlap.mjs` (reads every BG map to rule out real VRAM overlaps) |
 | `web/` | Static player site (EmulatorJS + mGBA) deployed to Vercel |
 
 ## Build

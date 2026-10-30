@@ -19,6 +19,12 @@ namespace septem
 
         void draw(const level& lv, int x, int y, int facing);
 
+        // Jolts the view by a few pixels (impact of a blow); 0, 0 to settle.
+        void set_shake(int x, int y)
+        {
+            _bg.set_position(8 + x, 48 + y);
+        }
+
         void set_visible(bool visible)
         {
             _bg.set_visible(visible);
