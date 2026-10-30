@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SEPTEM</title>
+  <style>
+    :root { --black: #000000; --white: #ffffff; --red: #d00024; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--black); color: var(--white); }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+      font-family: Georgia, "Times New Roman", serif; padding: 16px;
+    }
+    h1 { letter-spacing: 0.45em; font-weight: normal; margin: 8px 0 2px; padding-left: 0.45em; }
+    .rule { width: 160px; height: 2px; background: var(--red); margin-bottom: 16px; }
+    #stage { width: 100%; max-width: 720px; aspect-ratio: 3 / 2; position: relative; border: 1px solid var(--white); }
+    #game { position: absolute; inset: 0; }
+    #begin {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: var(--black); color: var(--white); border: 0; font: inherit; font-size: 18px;
+      letter-spacing: 0.3em; cursor: pointer;
+    }
+    #begin:hover { color: var(--red); }
+    table { border-collapse: collapse; margin-top: 18px; font-size: 14px; }
+    td { padding: 3px 12px; border-bottom: 1px solid #ffffff33; }
+    td:first-child { color: var(--red); text-align: right; }
+    p { max-width: 720px; font-size: 13px; line-height: 1.5; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <h1>SEPTEM</h1>
+  <div class="rule"></div>
+  <div id="stage">
+    <div id="game"></div>
+    <button id="begin" type="button">ENTER THE ABBEY</button>
+  </div>
+
+  <p style="margin:10px 0 0">Click the game once so it takes the keyboard.</p>
+  <table>
+    <tr><td>Arrow keys</td><td>Step forward / back, turn left / right</td></tr>
+    <tr><td>Enter</td><td>Start</td></tr>
+    <tr><td>Shift</td><td>Select: take a wound (the 4th wound kills and brands the arm)</td></tr>
+    <tr><td>A key</td><td>L: spend a mana gem</td></tr>
+    <tr><td>S key</td><td>R: restore the gems</td></tr>
+  </table>
+  <p>
+    Early build: exploration of Stage I, the Drowned Abbey. Wounds, gems and the
+    death brand are on preview keys until duels exist. Touch controls appear on phones.
+    Runs in the browser with EmulatorJS and the mGBA core (GPL-3.0; see
+    <a href="NOTICE.md" style="color:inherit">NOTICE.md</a>).
+  </p>
+
+  <script>
+    document.getElementById('begin').addEventListener('click', (e) => {
+      e.currentTarget.remove();
+      window.EJS_player = '#game';
+      window.EJS_core = 'gba';
+      window.EJS_gameName = 'SEPTEM';
+      window.EJS_gameUrl = 'septem.gba';
+      window.EJS_pathtodata = 'data/';
+      window.EJS_startOnLoaded = true;
+      window.EJS_color = '#D00024';
+      window.EJS_backgroundColor = '#000000';
+      window.EJS_language = 'en-US';
+      window.EJS_disableAutoLang = false;
+      const s = document.createElement('script');
+      s.src = 'data/loader.js';
+      document.body.appendChild(s);
+    });
+  </script>
+</body>
+</html>

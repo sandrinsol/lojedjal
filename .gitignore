@@ -1,0 +1,11 @@
+build/
+*.gba
+*.elf
+*.sav
+*.map
+bn_ofiles.txt
+__pycache__/
+web/dist/
+!web/septem.gba
+tests/out/
+node_modules/
