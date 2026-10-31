@@ -42,7 +42,7 @@
   <p style="margin:10px 0 0">Click the game once so it takes the keyboard.</p>
   <table>
     <tr><td>Arrow keys</td><td>Step forward / back, turn left / right</td></tr>
-    <tr><td>Enter</td><td>Start</td></tr>
+    <tr><td>Enter</td><td>Start · Shift: Select</td></tr>
     <tr><td>X key</td><td>A: strike with the sword</td></tr>
     <tr><td>S key</td><td>R: parry, just before his blow lands</td></tr>
     <tr><td>Z key</td><td>B: drink a vial of blessed blood (3 per life)</td></tr>
@@ -91,6 +91,19 @@
       window.EJS_backgroundColor = '#000000';
       window.EJS_language = 'en-US';
       window.EJS_disableAutoLang = false;
+      // The game's keys, matching the table above (libretro slots: 8 A, 0 B,
+      // 10 L, 11 R, 2 SELECT, 3 START). The emulator's own defaults put L and
+      // R on Q and E, and A and B on Z and X.
+      window.EJS_defaultControls = {
+        0: {
+          8: { value: 'x' }, 0: { value: 'z' }, 10: { value: 'a' }, 11: { value: 's' },
+          2: { value: 'shift' }, 3: { value: 'enter' },
+          4: { value: 'up arrow' }, 5: { value: 'down arrow' },
+          6: { value: 'left arrow' }, 7: { value: 'right arrow' },
+          1: {}, 9: {}, 12: {}, 13: {},
+        },
+        1: {}, 2: {}, 3: {},
+      };
       const s = document.createElement('script');
       s.src = 'data/loader.js';
       document.body.appendChild(s);
