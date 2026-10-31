@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SEPTEM Map Editor</title>
+  <style>
+    :root { --black: #000000; --white: #ffffff; --red: #d00024; --dim: #ffffff55; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--black); color: var(--white); }
+    body { font-family: Georgia, "Times New Roman", serif; padding: 16px; display: flex; flex-direction: column; align-items: center; }
+    h1 { letter-spacing: 0.4em; font-weight: normal; margin: 4px 0 2px; padding-left: 0.4em; font-size: 22px; }
+    .rule { width: 140px; height: 2px; background: var(--red); margin-bottom: 14px; }
+    a { color: inherit; }
+    .layout { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 980px; }
+    .panel { display: flex; flex-direction: column; gap: 10px; min-width: 240px; max-width: 300px; flex: 1; }
+    .panel h2 { font-size: 13px; letter-spacing: 0.25em; font-weight: normal; margin: 6px 0 0; color: var(--red); }
+    .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    button {
+      background: var(--black); color: var(--white); border: 1px solid var(--white); font: inherit; font-size: 14px;
+      padding: 7px 8px; cursor: pointer; text-align: left;
+    }
+    button:hover { border-color: var(--red); }
+    button[aria-pressed="true"] { background: var(--white); color: var(--black); }
+    button.primary { border-color: var(--red); color: var(--white); text-align: center; letter-spacing: 0.15em; }
+    button.primary:hover { background: var(--red); }
+    kbd { font-family: inherit; border: 1px solid var(--dim); padding: 0 4px; font-size: 12px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    input[type=number] { width: 64px; background: var(--black); color: var(--white); border: 1px solid var(--white); font: inherit; padding: 4px; }
+    textarea { width: 100%; height: 150px; background: var(--black); color: var(--white); border: 1px solid var(--white); font: 12px/1.15 "Courier New", monospace; padding: 6px; resize: vertical; }
+    #board { touch-action: none; cursor: crosshair; border: 1px solid var(--white); image-rendering: pixelated; max-width: 100%; }
+    .stage { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 2; min-width: 300px; }
+    #status { font-size: 13px; min-height: 1.4em; text-align: center; }
+    #status.err { color: var(--red); }
+    .legend { font-size: 12px; opacity: 0.85; line-height: 1.6; }
+    .sw { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--white); vertical-align: -2px; margin-right: 4px; }
+  </style>
+</head>
+<body>
+  <h1>SEPTEM</h1>
+  <div class="rule"></div>
+  <div style="font-size:14px;margin-bottom:12px;letter-spacing:0.15em">MAP EDITOR · <a href="./">PLAY</a></div>
+
+  <div class="layout">
+    <div class="panel">
+      <h2>PAINT</h2>
+      <div class="tools" id="tools">
+        <button data-tool="#" aria-pressed="true"><kbd>1</kbd> Wall</button>
+        <button data-tool="W" aria-pressed="false"><kbd>2</kbd> Window wall</button>
+        <button data-tool="." aria-pressed="false"><kbd>3</kbd> Floor</button>
+        <button data-tool="S" aria-pressed="false"><kbd>4</kbd> Start</button>
+        <button data-tool="M" aria-pressed="false"><kbd>5</kbd> Monk</button>
+      </div>
+      <div class="legend">
+        Click or drag to paint. Right-click paints floor.
+        With <b>Start</b>, click a floor cell to place the player; click it again to turn them.
+        <kbd>R</kbd> also turns the start.
+      </div>
+
+      <h2>SIZE</h2>
+      <div class="row">
+        <input id="w" type="number" min="8" max="32" /> × <input id="h" type="number" min="8" max="32" />
+        <button id="resize" type="button">Resize</button>
+      </div>
+      <div class="row">
+        <button id="border" type="button">Wall the border</button>
+        <button id="clear" type="button">Fill with walls</button>
+      </div>
+      <div class="row">
+        <button id="undo" type="button"><kbd>Ctrl Z</kbd> Undo</button>
+        <button id="reset" type="button">Reload the abbey</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas id="board"></canvas>
+      <div id="status"></div>
+      <div class="legend">
+        <span class="sw" style="background:#fff"></span>wall
+        <span class="sw" style="background:#000;border-color:#d00024"></span>window wall
+        <span class="sw" style="background:#000"></span>floor
+        <span class="sw" style="background:#d00024"></span>start
+        <span class="sw" style="background:#000;border-radius:50%"></span>monk
+        · faint red: floor the player can't reach
+      </div>
+      <button class="primary" id="play" type="button" style="min-width:240px">PLAY THIS MAP</button>
+    </div>
+
+    <div class="panel">
+      <h2>MAP TEXT</h2>
+      <div class="legend"><kbd>#</kbd> wall · <kbd>W</kbd> window · <kbd>.</kbd> floor · <kbd>M</kbd> monk · <kbd>^ &gt; v &lt;</kbd> start facing N / E / S / W</div>
+      <textarea id="text" spellcheck="false" aria-label="Map as text"></textarea>
+      <div class="row">
+        <button id="apply" type="button">Apply text</button>
+        <button id="copy" type="button">Copy</button>
+        <button id="download" type="button">Download</button>
+      </div>
+      <div class="legend">
+        Your map is saved in this browser. To make it the game's Stage I,
+        send me the text (or the downloaded file) and I'll commit it.
+      </div>
+    </div>
+  </div>
+
+  <script src="septem-map.js"></script>
+  <script>
+    const M = window.SeptemMap;
+    const board = document.getElementById('board');
+    const ctx = board.getContext('2d');
+    const statusEl = document.getElementById('status');
+    const textEl = document.getElementById('text');
+    let map = null;           // { width, height, cells: [[char]], start }
+    let tool = '#';
+    let romBytes = null;
+    let defaultMap = null;
+    const history = [];
+    const CELL = 22;
+
+    const toGrid = (m) => ({ width: m.width, height: m.height, cells: m.cells.map((r) => [...r]), start: { ...m.start } });
+    const toMap = (g) => ({ width: g.width, height: g.height, cells: g.cells.map((r) => r.join('')), start: g.start });
+    const snapshot = () => JSON.stringify(map);
+
+    function setStatus(msg, err) {
+      statusEl.textContent = msg;
+      statusEl.className = err ? 'err' : '';
+    }
+
+    function reachable() {
+      const seen = new Set();
+      const q = [[map.start.x, map.start.y]];
+      seen.add(map.start.y * map.width + map.start.x);
+      while (q.length) {
+        const [x, y] = q.pop();
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue;
+          const k = ny * map.width + nx;
+          if ('.M'.includes(map.cells[ny][nx]) && !seen.has(k)) { seen.add(k); q.push([nx, ny]); }
+        }
+      }
+      return seen;
+    }
+
+    function draw() {
+      board.width = map.width * CELL;
+      board.height = map.height * CELL;
+      const reach = reachable();
+      let lost = 0;
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          const c = map.cells[y][x];
+          const px = x * CELL, py = y * CELL;
+          if (c === '#') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(px, py, CELL, CELL);
+            // Engraved hatching on walls.
+            ctx.fillStyle = '#000000';
+            for (let i = 3; i < CELL; i += 4) ctx.fillRect(px, py + i, CELL, 1);
+          } else if (c === 'W') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(px, py, CELL, CELL);
+            ctx.fillStyle = '#000000';
+            for (let i = 3; i < CELL; i += 4) ctx.fillRect(px, py + i, CELL, 1);
+            // A pointed lancet window.
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(px + 7, py + 8, 8, 11);
+            ctx.beginPath(); ctx.moveTo(px + 7, py + 8); ctx.lineTo(px + 11, py + 3); ctx.lineTo(px + 15, py + 8); ctx.fill();
+            ctx.strokeStyle = '#d00024'; ctx.lineWidth = 2;
+            ctx.strokeRect(px + 6, py + 8, 10, 12);
+          } else {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(px, py, CELL, CELL);
+            if (c === 'M') {
+              // A hooded monk: white cowl and robe, black face.
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath(); ctx.arc(px + 11, py + 8, 5, 0, Math.PI * 2); ctx.fill();
+              ctx.beginPath(); ctx.moveTo(px + 5, py + 20); ctx.lineTo(px + 8, py + 11); ctx.lineTo(px + 14, py + 11); ctx.lineTo(px + 17, py + 20); ctx.fill();
+              ctx.fillStyle = '#000000';
+              ctx.beginPath(); ctx.arc(px + 11, py + 9, 2.4, 0, Math.PI * 2); ctx.fill();
+            }
+            if (!reach.has(y * map.width + x)) {
+              lost++;
+              ctx.fillStyle = '#d0002440';
+              ctx.fillRect(px, py, CELL, CELL);
+            }
+          }
+        }
+      }
+      // Start: a red arrow pointing the way the player faces.
+      const s = map.start;
+      const cx = s.x * CELL + CELL / 2, cy = s.y * CELL + CELL / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(s.facing * Math.PI / 2);
+      ctx.fillStyle = '#d00024';
+      ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(7, 6); ctx.lineTo(0, 2); ctx.lineTo(-7, 6); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // Grid.
+      ctx.strokeStyle = '#ffffff22'; ctx.lineWidth = 1;
+      for (let x = 0; x <= map.width; x++) { ctx.beginPath(); ctx.moveTo(x * CELL + 0.5, 0); ctx.lineTo(x * CELL + 0.5, board.height); ctx.stroke(); }
+      for (let y = 0; y <= map.height; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL + 0.5); ctx.lineTo(board.width, y * CELL + 0.5); ctx.stroke(); }
+
+      document.getElementById('w').value = map.width;
+      document.getElementById('h').value = map.height;
+      const text = M.serialize(toMap(map));
+      if (document.activeElement !== textEl) textEl.value = text;
+      M.save(text);
+      const monks = map.cells.reduce((n, row) => n + row.filter((c) => c === 'M').length, 0);
+      setStatus(`${map.width} × ${map.height} · start ${s.x},${s.y} facing ${'NESW'[s.facing]} · ${monks} monk${monks === 1 ? '' : 's'}` +
+        (lost ? ` · ${lost} floor cell${lost > 1 ? 's' : ''} unreachable` : ''));
+    }
+
+    function remember() {
+      history.push(snapshot());
+      if (history.length > 200) history.shift();
+    }
+
+    function cellAt(ev) {
+      const r = board.getBoundingClientRect();
+      const x = Math.floor((ev.clientX - r.left) / r.width * map.width);
+      const y = Math.floor((ev.clientY - r.top) / r.height * map.height);
+      return x >= 0 && y >= 0 && x < map.width && y < map.height ? { x, y } : null;
+    }
+
+    function paint(p, t) {
+      if (t === 'S') {
+        if (map.cells[p.y][p.x] !== '.') { setStatus('The start must be on an empty floor cell', true); return; }
+        if (map.start.x === p.x && map.start.y === p.y) map.start.facing = (map.start.facing + 1) & 3;
+        else map.start = { x: p.x, y: p.y, facing: map.start.facing };
+        draw();
+        return;
+      }
+      if (map.start.x === p.x && map.start.y === p.y && t !== '.') { setStatus('Move the start before changing its cell', true); return; }
+      if (map.cells[p.y][p.x] === t) return;
+      map.cells[p.y][p.x] = t;
+      draw();
+    }
+
+    let painting = null;
+    board.addEventListener('contextmenu', (e) => e.preventDefault());
+    board.addEventListener('pointerdown', (e) => {
+      const p = cellAt(e);
+      if (!p) return;
+      remember();
+      painting = e.button === 2 ? '.' : tool;
+      board.setPointerCapture(e.pointerId);
+      paint(p, painting);
+      if (painting === 'S') painting = null;
+    });
+    board.addEventListener('pointermove', (e) => { if (painting) { const p = cellAt(e); if (p) paint(p, painting); } });
+    const stop = () => { painting = null; };
+    board.addEventListener('pointerup', stop);
+    board.addEventListener('pointercancel', stop);
+
+    function selectTool(t) {
+      tool = t;
+      document.querySelectorAll('#tools button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === t)));
+    }
+    document.querySelectorAll('#tools button').forEach((b) => b.addEventListener('click', () => selectTool(b.dataset.tool)));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target === textEl || e.target.tagName === 'INPUT') return;
+      if (e.key === '1') selectTool('#');
+      else if (e.key === '2') selectTool('W');
+      else if (e.key === '3') selectTool('.');
+      else if (e.key === '4') selectTool('S');
+      else if (e.key === '5') selectTool('M');
+      else if (e.key === 'r' || e.key === 'R') { remember(); map.start.facing = (map.start.facing + 1) & 3; draw(); }
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+    });
+
+    function undo() {
+      if (!history.length) return;
+      map = JSON.parse(history.pop());
+      draw();
+    }
+    document.getElementById('undo').addEventListener('click', undo);
+
+    document.getElementById('resize').addEventListener('click', () => {
+      const w = Math.max(M.MIN, Math.min(M.MAX, +document.getElementById('w').value | 0));
+      const h = Math.max(M.MIN, Math.min(M.MAX, +document.getElementById('h').value | 0));
+      remember();
+      const cells = [];
+      for (let y = 0; y < h; y++) {
+        const row = [];
+        for (let x = 0; x < w; x++) row.push(y < map.height && x < map.width ? map.cells[y][x] : '#');
+        cells.push(row);
+      }
+      let start = map.start;
+      if (start.x >= w || start.y >= h) {
+        start = { x: Math.min(start.x, w - 2), y: Math.min(start.y, h - 2), facing: start.facing };
+        cells[start.y][start.x] = '.';
+      }
+      map = { width: w, height: h, cells, start };
+      draw();
+    });
+
+    document.getElementById('border').addEventListener('click', () => {
+      remember();
+      for (let y = 0; y < map.height; y++) for (let x = 0; x < map.width; x++) {
+        const edge = x === 0 || y === 0 || x === map.width - 1 || y === map.height - 1;
+        if (edge && map.cells[y][x] === '.' && !(map.start.x === x && map.start.y === y)) map.cells[y][x] = '#';
+      }
+      draw();
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+      remember();
+      map.cells = map.cells.map((row, y) => row.map((c, x) => (x === map.start.x && y === map.start.y ? '.' : '#')));
+      draw();
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      if (!defaultMap) return;
+      remember();
+      map = toGrid(defaultMap);
+      draw();
+    });
+
+    document.getElementById('apply').addEventListener('click', () => {
+      try {
+        const parsed = M.parse(textEl.value);
+        remember();
+        map = toGrid(parsed);
+        textEl.blur();
+        draw();
+      } catch (err) {
+        setStatus(err.message, true);
+      }
+    });
+
+    document.getElementById('copy').addEventListener('click', async () => {
+      const text = M.serialize(toMap(map));
+      try { await navigator.clipboard.writeText(text); setStatus('Map text copied'); }
+      catch { textEl.focus(); textEl.select(); setStatus('Select the text and copy it'); }
+    });
+
+    document.getElementById('download').addEventListener('click', () => {
+      const blob = new Blob([M.serialize(toMap(map)) + '\n'], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'septem-map.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById('play').addEventListener('click', () => {
+      if (!M.save(M.serialize(toMap(map)))) { setStatus('This browser blocks storage, so the map cannot be handed to the game', true); return; }
+      location.href = './?map=custom';
+    });
+
+    (async () => {
+      try {
+        romBytes = new Uint8Array(await (await fetch('septem.gba', { cache: 'no-cache' })).arrayBuffer());
+        defaultMap = M.readBlock(romBytes);
+      } catch (err) {
+        setStatus(`Could not read the game's map: ${err.message}`, true);
+      }
+      let start = defaultMap;
+      const saved = M.loadSaved();
+      if (saved) { try { start = M.parse(saved); } catch { /* fall back to the game's map */ } }
+      if (!start) return;
+      map = toGrid(start);
+      draw();
+    })();
+  </script>
+</body>
+</html>
