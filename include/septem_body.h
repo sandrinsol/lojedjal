@@ -39,6 +39,9 @@ namespace septem
             return cut;
         }
 
+        // Shows the death screen over everything (until the next refresh).
+        void show_death();
+
         // Re-reads gems, deaths and wounds.
         void refresh();
 

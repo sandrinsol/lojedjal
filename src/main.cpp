@@ -298,10 +298,13 @@ namespace
                 {
                     duel_state = PLAYER_DYING;
 
-                    for(int i = 0; i < 90; ++i)
+                    for(int i = 0; i < 40; ++i)
                     {
                         tick(view, hands, i < 20 ? ((i & 1) ? 2 : -2) : 0);
                     }
+
+                    hands.show_death();
+                    wait(view, hands, 150);
 
                     monk.hide_duel();
                     duel_state = NO_DUEL;
