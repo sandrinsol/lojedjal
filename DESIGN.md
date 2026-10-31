@@ -73,7 +73,8 @@ Everything is shown through the body and the world:
 
 - **Mana refills at the start of every fight** (all 3 gems).
 - **Parry window:** 10 frames normally, 6 frames under Sloth's lullaby curse.
-- **Health vials:** 3 vials of blessed blood. Drinking one takes your turn.
+- **Healing flask:** one flask of blessed blood holding 3 draughts; drinking lifts
+  it into view, so its level shows how many are left. Drinking one takes your turn.
   Vials refill at the shrine.
 
 ### Duel numbers (Somnolent Monk, first build)
@@ -86,7 +87,7 @@ Everything is shown through the body and the world:
 | Monk wind-up | holds the censer 30–90 frames (uneven, to bait an early block) |
 | The blow | 28 frames falling. R in the last 20 is a perfect parry: no damage, he staggers. R any earlier (or held) blocks |
 | Parry cue | As the last 20 frames begin, the monk turns pure white for 4 frames; a perfect parry turns the whole screen white for 3 |
-| Vial | +6 health, takes your turn (3 per life) |
+| Flask | +6 health per draught, takes your turn; 3 draughts per life. Drinking lifts the flask, which shows what is left: full, two-thirds, one-third, empty |
 | WARD | 1 gem, softens the next 2 blows |
 
 The player acts first; after each action the monk takes his turn. Monks block

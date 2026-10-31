@@ -11,7 +11,8 @@ extern volatile int gems;         // lit mana gems
 extern volatile int vials;        // health vials left
 extern volatile int deaths;       // branded on the right forearm
 extern volatile int game_state;   // 0 title, 1 exploring, 2 duel
-extern volatile int arm_pose;     // 0 at rest, 1-4 the frames of a strike
+extern volatile int arm_pose;     // 0 rest, 1-4 strike, 5-7 block, 8-10 perfect parry
+extern volatile int left_pose;    // 0 gauntlet, 1-4 flask held (0..3 left), 5-6 drinking
 
 namespace septem
 {

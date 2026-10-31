@@ -8,7 +8,10 @@ engravers and replaces their output wherever a source image exists.
 
   hands.png       left gauntlet (raw/gauntlet.png); its red gems stay in the
                   art, spent gems are covered by the gem sprite
-  arm_0..4.png    right arm: rest (raw/arm_sword.png), strike_1..4
+  left_1..6.png   left hand with the flask: held with 0..3 draughts left
+                  (raw/flask_hold_N), drinking (flask_drink, flask_drink_0)
+  arm_0..10.png   right arm: rest (raw/arm_sword.png), strike_1..4,
+                  block_1..3, parry_1..3
                   (the baked-in "III" is erased: the game brands the real count)
   gem.png         2 frames: lit (empty: the gauntlet's own gem shows) / spent
   monk.png        Somnolent Monk duel poses, 128x128 in 64x64 quadrants
@@ -35,6 +38,7 @@ RAW = os.path.join(ROOT, 'assets', 'raw')
 
 # Where the hands sit: (left, top, size) of each square source on screen.
 GAUNTLET = (-14, 58, 112)
+FLASK = (-24, 14, 150)     # the flask held up: larger, nearer the middle
 ARM = (80, 0, 168)
 
 MONK_POSES = ['idle', 'windup', 'strike', 'stagger', 'death']
@@ -149,16 +153,44 @@ def red_blobs(img):
 
 # ---------------------------------------------------------------------------
 
-def gauntlet():
-    left, top, s = GAUNTLET
-    img = outline(reduce(*load('gauntlet'), (s, s), threshold=0.45))
-    gems = sorted(red_blobs(img)[:3], key=lambda b: b[1])
+# Left-hand frames: the gauntlet at rest, then the flask held up with 0..3
+# draughts left, then drinking (with blood flowing, and the last one gone).
+LEFT_FRAMES = ['gauntlet', 'flask_hold_0', 'flask_hold_1', 'flask_hold_2', 'flask_hold_3',
+               'flask_drink', 'flask_drink_0']
+
+
+def find_gems(img, name):
+    """The gauntlet's three gems: round red blobs of similar size on the
+    knuckles, left of anything else red (the flask's blood is on the right)."""
+    blobs = []
+    for size, x0, y0, x1, y1 in red_blobs(img):
+        w, h = x1 - x0 + 1, y1 - y0 + 1
+        if 4 <= size and 0.5 <= w / h <= 2.0 and max(w, h) <= img.shape[1] * 0.12:
+            blobs.append((size, x0, y0, x1, y1))
+    blobs = sorted(blobs, key=lambda b: (b[1] + b[3]) / 2)
+    # Keep the three leftmost blobs of a gem's size.
+    big = sorted(blobs, reverse=True)[:6]
+    sizes = sorted(b[0] for b in big)
+    floor = sizes[len(sizes) // 2] * 0.35 if sizes else 0
+    gems = [b for b in blobs if b[0] >= floor][:3]
     if len(gems) != 3:
-        raise SystemExit(f'gauntlet: expected 3 red gems, found {len(gems)}')
-    save(place(img, left, top), 'hands.png')
-    centres = [(left + (b[1] + b[3]) / 2, top + (b[2] + b[4]) / 2) for b in gems]
-    radius = max(max(b[3] - b[1], b[4] - b[2]) for b in gems) / 2 + 1
-    return centres, radius
+        raise SystemExit(f'{name}: expected 3 red gems, found {len(gems)}')
+    return gems
+
+
+def left_hand():
+    """hands.png and flask_*.png BGs; gem centres (screen) for every frame."""
+    all_centres = []
+    radius = 0
+    for i, name in enumerate(LEFT_FRAMES):
+        left, top, s = GAUNTLET if i == 0 else FLASK
+        img = outline(reduce(*load(name), (s, s), threshold=0.45, red_cover=0.25))
+        gems = find_gems(img, name)
+        save(place(img, left, top), 'hands.png' if i == 0 else f'left_{i}.png')
+        all_centres.append([(left + (b[1] + b[3]) / 2, top + (b[2] + b[4]) / 2) for b in gems])
+        if i == 0:
+            radius = max(max(b[3] - b[1], b[4] - b[2]) for b in gems) / 2 + 1
+    return all_centres, radius
 
 
 def spent_gem(radius):
@@ -176,18 +208,22 @@ def spent_gem(radius):
 def arms():
     left, top, s = ARM
     brand = None
-    frames = ['arm_sword'] + [f'strike_{i}' for i in range(1, 5)]
+    frames = ['arm_sword'] + [f'strike_{i}' for i in range(1, 5)] + \
+             [f'block_{i}' for i in range(1, 4)] + [f'parry_{i}' for i in range(1, 4)]
     for i, name in enumerate(frames):
         img = outline(reduce(*load(name), (s, s), threshold=0.5, red_cover=0.12))
         blobs = red_blobs(img)
         if blobs:
-            x0 = min(b[1] for b in blobs) - 2
-            y0 = min(b[2] for b in blobs) - 2
-            x1 = max(b[3] for b in blobs) + 2
-            y1 = max(b[4] for b in blobs) + 2
-            box = img[y0:y1 + 1, x0:x1 + 1]
-            box[box != T] = WHITE        # bare skin, ready for the real brand
+            # Erase each painted mark on its own (bare skin, ready for the
+            # real brand), so stray red specks don't blank a large box.
+            for _, bx0, by0, bx1, by1 in blobs:
+                box = img[max(0, by0 - 1):by1 + 2, max(0, bx0 - 1):bx1 + 2]
+                box[box != T] = WHITE
             if i == 0:
+                x0 = min(b[1] for b in blobs)
+                y0 = min(b[2] for b in blobs)
+                x1 = max(b[3] for b in blobs)
+                y1 = max(b[4] for b in blobs)
                 brand = (left + (x0 + x1) / 2, top + (y0 + y1) / 2)
         save(place(img, left, top), f'arm_{i}.png')
     if brand is None:
@@ -258,10 +294,13 @@ def death():
     save(c, 'death.png')
 
 
-def write_layout(gems, radius, brand):
+def write_layout(all_gems, radius, brand):
     path = os.path.join(ROOT, 'include', 'gen', 'septem_layout.h')
+    gems = all_gems[0]
     gx = ', '.join(str(int(round(x))) for x, _ in gems)
     gy = ', '.join(str(int(round(y))) for _, y in gems)
+    rows_x = ',\n        '.join('{ ' + ', '.join(str(int(round(x))) for x, _ in g) + ' }' for g in all_gems)
+    rows_y = ',\n        '.join('{ ' + ', '.join(str(int(round(y))) for _, y in g) + ' }' for g in all_gems)
     with open(path, 'w') as fh:
         fh.write(f'''// Generated by tools/import_art.py from the artwork in assets/raw. Do not edit.
 #ifndef SEPTEM_LAYOUT_GEN_H
@@ -273,6 +312,16 @@ namespace septem::gen
     // the centre of the brand on the right forearm.
     constexpr int gem_x[3] = {{ {gx} }};
     constexpr int gem_y[3] = {{ {gy} }};
+    constexpr int left_frames = {len(all_gems)};
+
+    // The gems in every left-hand frame (0 the gauntlet, 1..4 the flask held
+    // with 0..3 draughts left, 5 drinking, 6 the last draught gone).
+    constexpr int left_gem_x[{len(all_gems)}][3] = {{
+        {rows_x}
+    }};
+    constexpr int left_gem_y[{len(all_gems)}][3] = {{
+        {rows_y}
+    }};
     constexpr int brand_x = {int(round(brand[0]))};
     constexpr int brand_y = {int(round(brand[1]))};
 }}
@@ -283,13 +332,14 @@ namespace septem::gen
 
 
 def main():
-    needed = ['gauntlet', 'arm_sword', 'strike_1', 'strike_2', 'strike_3', 'strike_4', 'title', 'death'] + \
+    needed = LEFT_FRAMES + ['arm_sword', 'strike_1', 'strike_2', 'strike_3', 'strike_4', 'title', 'death'] + \
+             [f'block_{i}' for i in range(1, 4)] + [f'parry_{i}' for i in range(1, 4)] + \
              [f'monk_{p}' for p in MONK_POSES]
     missing = [n for n in needed if not have(n)]
     if missing:
         print('import_art: missing assets/raw/' + ', '.join(missing) + '; keeping the engraved placeholders')
         return
-    gems, radius = gauntlet()
+    gems, radius = left_hand()
     spent_gem(radius)
     brand = arms()
     monk()
