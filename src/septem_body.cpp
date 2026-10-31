@@ -9,10 +9,12 @@
 #include "bn_regular_bg_items_vignette_1.h"
 #include "bn_regular_bg_items_vignette_2.h"
 #include "bn_regular_bg_items_vignette_3.h"
+#include "bn_regular_bg_items_death.h"
 #include "bn_sprite_items_gem.h"
 #include "bn_sprite_items_brand.h"
 
 #include "septem_state.h"
+#include "gen/septem_layout.h"
 
 namespace septem
 {
@@ -21,11 +23,11 @@ namespace
 {
     constexpr int max_brand = 15;
 
-    // Screen positions from tools/engrave_sprites.py (gem centres, brand top-left).
-    constexpr int gem_x[3] = { 20, 33, 46 };
-    constexpr int gem_y[3] = { 113, 108, 106 };
-    constexpr int brand_x = 173 + 16;
-    constexpr int brand_y = 113 + 8;
+    // Screen positions measured from the art (gem centres, brand centre).
+    constexpr const int* gem_x = gen::gem_x;
+    constexpr const int* gem_y = gen::gem_y;
+    constexpr int brand_x = gen::brand_x;
+    constexpr int brand_y = gen::brand_y;
 
     // Hands sway on each step: down, then settle back.
     constexpr int bob_curve[] = { 1, 3, 4, 4, 3, 2, 1, 1, 0 };
@@ -103,6 +105,14 @@ void body::guard(int frames)
         _guard = frames;
         _set_arm(1);
     }
+}
+
+void body::show_death()
+{
+    // The death screen takes the vignette's layer, above everything.
+    _vignette.reset();
+    _vignette = bn::regular_bg_items::death.create_bg(0, 0);
+    _vignette->set_priority(0);
 }
 
 void body::refresh()

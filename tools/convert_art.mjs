@@ -29,7 +29,7 @@ async function checkPalette(file) {
   }
 }
 
-const backgrounds = ['hands', 'arm_0', 'arm_1', 'arm_2', 'arm_3', 'arm_4', 'vignette_1', 'vignette_2', 'vignette_3', 'title'];
+const backgrounds = ['hands', 'arm_0', 'arm_1', 'arm_2', 'arm_3', 'arm_4', 'vignette_1', 'vignette_2', 'vignette_3', 'title', 'death'];
 const sprites = [['gem', 16, 16], ['brand', 32, 16], ['monk', 64, 64], ['monk_far', 64, 64]];
 
 for (const name of backgrounds) {

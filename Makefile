@@ -4,7 +4,8 @@
 # Needs devkitARM (DEVKITPRO / DEVKITARM set) and Butano: set BUTANO to the
 # Butano checkout (the folder with butano/ and common/ inside).
 # Map: `make map` turns maps/drowned_abbey.txt into include/gen/septem_map.h.
-# Art: `make art` regenerates assets/ and graphics/ (Python 3 + numpy, scipy,
+# Art: `make art` regenerates (artwork in assets/raw replaces the engraved
+# placeholders, see tools/import_art.py) assets/ and graphics/ (Python 3 + numpy, scipy,
 # Pillow; Node 20 + the gb-gbc-gba-test-mcp harness, see tools/convert_art.mjs).
 BUTANO       ?= /opt/butano
 # Butano resolves these folders from the project, so use a relative path.
@@ -53,4 +54,5 @@ art: map
 	$(PYTHON) tools/engrave_world.py
 	$(PYTHON) tools/engrave_sprites.py
 	$(PYTHON) tools/engrave_monk.py
+	$(PYTHON) tools/import_art.py
 	node tools/convert_art.mjs

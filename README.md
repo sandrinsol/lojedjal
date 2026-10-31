@@ -32,6 +32,8 @@ and run `make map` (or send the text to Claude to commit). Map text:
 | `tools/engrave_world.py` | Renders the first-person wall/floor panels as hatched engravings |
 | `tools/engrave_sprites.py` | Engraves the hands, gems, brand numerals, vignettes and title |
 | `tools/engrave_monk.py` | Engraves the Somnolent Monk: five duel poses and three distance views |
+| `tools/import_art.py` | Turns the generated artwork in `assets/raw/` (see `artwork.md`) into game art: three colours, game sizes, cut-outs; measures the gem and brand positions into `include/gen/septem_layout.h` |
+| `assets/raw/`, `assets/refs/` | Generated source artwork and the style references |
 | `tools/convert_art.mjs` | PNG → Butano `.bmp`/`.json` via the gb-gbc-gba-test-mcp converters (rejects any colour outside the palette) |
 | `assets/` → `graphics/` | Generated art → Butano imports |
 | `tests/` | Harness scripts: `play.mjs` (walkthrough), `strike.mjs` (sword swing), `duel.mjs` (fights the monk: parry, riposte, flinch, vial, WARD, death and reset), `mcp_check.mjs` (MCP `check` + `describe`), `vram_overlap.mjs` (reads every BG map to rule out real VRAM overlaps), `map_patch.mjs` (patches a map in as the editor does and checks the start) |

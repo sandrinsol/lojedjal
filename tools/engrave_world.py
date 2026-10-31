@@ -143,6 +143,21 @@ def window_mask(u, v, u0):
 
 def shade_wall(u, v, z, side, kind):
     """Return a colour index image for a wall surface sample."""
+    levels = TEXTURES.get(kind)
+    if levels is not None:
+        if side:
+            phase, cross, along = xs / 3.0, (ys + xs * 0.5) / 3.0, ys
+        else:
+            phase, cross, along = ys / 3.0, (xs - ys * 0.5) / 3.0, xs
+        # Stone tiles one texture per unit; the window wall spans the face.
+        tu = u - np.floor(u)
+        tv = (TOP - v) if kind == WALL else (TOP - v) / (TOP + EYE)
+        texels = TEX_SIZE * np.maximum(z, NEAR) / F * (1.0 if kind == WALL else 1.0 / (TOP + EYE))
+        # Side faces are foreshortened along u.
+        if side:
+            texels = texels * np.clip(np.abs(xs - CX) / (F * 0.25), 1, 8)
+        shade = np.clip(fog(z) * 1.05 + np.clip((v - 0.3) / 0.7, 0, 1) ** 1.4 * 0.6, 0, 1)
+        return np.where(textured(levels, tu, tv, texels, shade, phase, cross, along), BLACK, WHITE)
     tone, joints, highlight = stone_tone(u, v, z, side)
     # Front faces are cut with horizontal lines, receding faces with vertical
     # ones: the change of direction is what separates planes in an engraving.
@@ -164,6 +179,54 @@ def shade_wall(u, v, z, side, kind):
         out = np.where(inside, glow, out)
         out = np.where(mullion, BLACK, out)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Generated textures (assets/raw, see artwork.md): when present they replace
+# the procedural stone and water. Each is kept as darkness (0 paper .. 1 ink)
+# at 256x256, blurred into levels for distant surfaces.
+# ---------------------------------------------------------------------------
+
+TEX_SIZE = 256
+TEX_SIGMAS = [0.0, 0.7, 1.4, 2.8, 5.6, 11.0]
+
+
+def load_texture(name):
+    path = os.path.join(ROOT, 'assets', 'raw', f'{name}.png')
+    if not os.path.exists(path):
+        return None
+    from scipy import ndimage
+    im = Image.open(path).convert('L').resize((TEX_SIZE, TEX_SIZE), Image.BOX)
+    ink = 1.0 - np.asarray(im, np.float64) / 255.0
+    return [ink if sg == 0 else ndimage.gaussian_filter(ink, sg, mode='wrap') for sg in TEX_SIGMAS]
+
+
+TEXTURES = {k: load_texture(n) for k, n in ((WALL, 'wall_stone'), (WINDOW, 'wall_window'), ('floor', 'floor_water'))}
+
+
+def sample(levels, tu, tv, footprint):
+    """Darkness of a texture at (tu, tv) in 0..1, for a pixel covering
+    `footprint` texels: sharp near, blurred far."""
+    level = np.clip(np.round(np.log2(np.maximum(footprint, 1.0)) + 0.5), 0, len(levels) - 1).astype(int)
+    x = (np.floor(tu * TEX_SIZE).astype(int)) % TEX_SIZE
+    y = (np.floor(tv * TEX_SIZE).astype(int)) % TEX_SIZE
+    out = np.zeros(tu.shape)
+    for i, lv in enumerate(levels):
+        m = level == i
+        out[m] = lv[y[m], x[m]]
+    return out, footprint
+
+
+def textured(levels, tu, tv, footprint, shade, phase, cross, along):
+    """Engrave a textured surface: the texture's own lines where it is near,
+    hatching of its tone where it is far, with `shade` (fog, vault shadow)
+    cut over it as hatching."""
+    ink, _ = sample(levels, tu, tv, footprint)
+    near = footprint < 4.0
+    dark_near = (ink > 0.5) | hatch(phase, shade, cross, along)
+    tone = np.clip(1 - (1 - ink) * (1 - shade), 0, 1)
+    dark_far = hatch(phase, tone, cross, along)
+    return np.where(near, dark_near, dark_far)
 
 
 def zref_scale(z):
@@ -227,6 +290,12 @@ def render_base():
         z = np.where(below, EYE * F / (ys - HY), 99.0)
     X = (xs - CX) * z / F
     fz = fog(z)
+    levels = TEXTURES.get('floor')
+    if levels is not None:
+        # One texture per unit of floor; rows far away cover many texels.
+        texels = TEX_SIZE * np.maximum(z * z / (EYE * F), z / F)
+        dark = textured(levels, X, z, texels, np.clip(fz * 1.1, 0, 1), ys / 2.5, None, xs * 0.6)
+        return np.where(below, np.where(dark, BLACK, WHITE), img).astype(np.uint8)
     near = np.clip((1.0 - z) / 0.6, 0, 1) * 0.35
     tone = np.clip(0.16 + near * 1.2 + fz * 1.2, 0, 1)
     # Black water, cut with fine horizontal lines that thicken into the dark.

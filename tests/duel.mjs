@@ -76,7 +76,7 @@ expect('WARD softens the blow', await emu.v('hp') === 11, await emu.v('hp'));
 await emu.writeU32('hp', 1);
 await emu.tap('A');
 await emu.until('duel_state', 7, 400);   // dying
-await emu.waitFrames(10); await shot(emu, '9_dying');
+await emu.waitFrames(80); await shot(emu, '9_dying');
 await emu.until('game_state', 1, 300);
 await emu.waitFrames(10);
 expect('death brands the forearm', await emu.v('deaths') === 1);
