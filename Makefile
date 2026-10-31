@@ -1,13 +1,14 @@
 # SEPTEM - Butano (C++) project. `make` builds septem.gba plus septem.elf, whose
 # symbols the gb-gbc-gba-test harness reads (player_x, wounds, gems, ...).
 #
-# Needs devkitARM (DEVKITPRO / DEVKITARM set) and Butano: set BUTANO to the
-# Butano checkout (the folder with butano/ and common/ inside).
+# Needs devkitARM (DEVKITPRO / DEVKITARM set) and Butano: a Butano checkout
+# next to this repo (../butano) is found by default; otherwise set BUTANO to
+# the checkout (the folder with butano/ and common/ inside).
 # Map: `make map` turns maps/drowned_abbey.txt into include/gen/septem_map.h.
 # Art: `make art` regenerates (artwork in assets/raw replaces the engraved
 # placeholders, see tools/import_art.py) assets/ and graphics/ (Python 3 + numpy, scipy,
-# Pillow; Node 20 + the gb-gbc-gba-test-mcp harness, see tools/convert_art.mjs).
-BUTANO       ?= /opt/butano
+# Pillow; Node 20 + the gb-gbc-gba-test-mcp clone, see tools/paths.mjs).
+BUTANO       ?= $(firstword $(wildcard ../butano) /opt/butano)
 # Butano resolves these folders from the project, so use a relative path.
 BN           := $(shell python3 -c "import os, sys; print(os.path.relpath(sys.argv[1]))" "$(BUTANO)")
 

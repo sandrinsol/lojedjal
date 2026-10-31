@@ -1,9 +1,8 @@
 // Plays SEPTEM in the gb-gbc-gba-test harness (headless mGBA) and saves
 // screenshots of the title and a short walk to tests/out/.
 import path from 'node:path';
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
-const { EmuHarness } = await import(path.join(harness, 'driver.mjs'));
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+import { importHarness, root } from '../tools/paths.mjs';
+const { EmuHarness } = await importHarness('driver.mjs');
 const out = (f) => path.join(root, 'tests', 'out', f);
 
 const emu = await EmuHarness.launch(path.join(root, 'septem.gba'));

@@ -1,8 +1,7 @@
 // Swings the sword in the harness and saves each pose to tests/out/strike_*.png.
 import path from 'node:path';
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
-const { EmuHarness } = await import(path.join(harness, 'driver.mjs'));
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+import { importHarness, root } from '../tools/paths.mjs';
+const { EmuHarness } = await importHarness('driver.mjs');
 const emu = await EmuHarness.launch(path.join(root, 'septem.gba'));
 await emu.waitFrames(60);
 await emu.tap('START');

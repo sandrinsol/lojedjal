@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # Assembles web/ for static hosting (Vercel): the built ROM plus the EmulatorJS
-# bundle (GBA core only) from a gb-gbc-gba-test-mcp clone.
+# bundle (GBA core only) from a gb-gbc-gba-test-mcp clone, by default the one
+# next to this repo (../gb-gbc-gba-test-mcp); GBTEST_REPO overrides it.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
-emu="${GBTEST_REPO:-/home/user/sandrinsol/gb-gbc-gba-test-mcp}"
+emu="${GBTEST_REPO:-$root/../gb-gbc-gba-test-mcp}"
+if [ ! -d "$emu/data" ]; then
+  echo "gb-gbc-gba-test-mcp not found at $emu: clone it next to this repo or set GBTEST_REPO" >&2
+  exit 1
+fi
 web="$root/web"
 rm -rf "$web/data"
 mkdir -p "$web/data/cores" "$web/data/compression"
