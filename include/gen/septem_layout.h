@@ -6,8 +6,8 @@ namespace septem::gen
 {
     // Screen positions measured from the art: the gauntlet's three gems and
     // the centre of the brand on the right forearm.
-    constexpr int gem_x[3] = { 40, 52, 65 };
-    constexpr int gem_y[3] = { 100, 105, 112 };
+    constexpr int gem_x[3] = { 30, 42, 57 };
+    constexpr int gem_y[3] = { 102, 99, 102 };
     constexpr int brand_x = 204;
     constexpr int brand_y = 122;
 }
