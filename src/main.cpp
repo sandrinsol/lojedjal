@@ -78,8 +78,8 @@ namespace
     constexpr int monk_blocked_damage = 1;
     constexpr int monk_windup_min = 30;     // frames he holds the censer up:
     constexpr int monk_windup_max = 90;     // slow and uneven, to bait an early block
-    constexpr int monk_strike_frames = 18;  // the censer falling
-    constexpr int parry_window = 10;        // the last frames before impact: a perfect parry
+    constexpr int monk_strike_frames = 28;  // the censer falling
+    constexpr int parry_window = 20;        // the last frames before impact: a perfect parry
 
     // The monk flashes white as the parry window opens; a perfect parry
     // flashes the whole screen.
