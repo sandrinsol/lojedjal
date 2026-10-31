@@ -1,5 +1,8 @@
 #include "septem_monk.h"
 
+#include "bn_colors.h"
+#include "bn_sprite_palette_ptr.h"
+
 #include "bn_sprite_items_monk.h"
 #include "bn_sprite_items_monk_far.h"
 
@@ -67,6 +70,12 @@ void monk_view::hide_duel()
     }
 
     set_offset(0, 0);
+}
+
+void monk_view::set_flash(int percent)
+{
+    bn::sprite_palette_ptr palette = _duel[0].palette();
+    palette.set_fade(bn::colors::white, bn::fixed(percent) / 100);
 }
 
 void monk_view::set_offset(int x, int y)

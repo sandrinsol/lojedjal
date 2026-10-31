@@ -13,6 +13,8 @@
 //               brings it down. R blocks: the blow lands for 1 instead of 3.
 //               R in the last moments before impact is a perfect parry: no
 //               damage, he staggers, and your next strike lands twice as hard.
+//               He flashes white the moment a perfect parry becomes possible;
+//               a perfect parry flashes the whole screen.
 // Dying brands the forearm and restarts the stage: every monk stands again.
 //
 // The globals below are read by name by the gb-gbc-gba-test harness
@@ -21,6 +23,8 @@
 #include "bn_keypad.h"
 #include "bn_bg_palettes.h"
 #include "bn_color.h"
+#include "bn_colors.h"
+#include "bn_sprite_palettes.h"
 #include "bn_random.h"
 #include "bn_regular_bg_ptr.h"
 
@@ -46,6 +50,7 @@ volatile int enemy_hp = 0;
 volatile int ward_turns = 0;    // enemy blows still softened by WARD
 volatile int last_defence = 0;  // 0 none, 1 perfect parry, 2 hit, 3 blocked
 volatile int parries = 0;       // successful parries, for tests
+volatile int parry_window_open = 0;  // 1 while a perfect parry is possible
 volatile unsigned frame_counter = 0;
 volatile int cpu_usage = 0;
 
@@ -75,6 +80,13 @@ namespace
     constexpr int monk_windup_max = 90;     // slow and uneven, to bait an early block
     constexpr int monk_strike_frames = 18;  // the censer falling
     constexpr int parry_window = 10;        // the last frames before impact: a perfect parry
+
+    // The monk flashes white as the parry window opens; a perfect parry
+    // flashes the whole screen.
+    // Pure white only (a partial fade would make greys): the monk turns
+    // white for a few frames, a perfect parry turns the whole screen white.
+    constexpr int cue_frames = 4;
+    constexpr int parry_flash_frames = 3;
 
     constexpr int vial_heal = 6;
     constexpr int ward_length = 2;
@@ -259,6 +271,10 @@ namespace
 
             for(int i = 0; i < monk_strike_frames && ! parried; ++i)
             {
+                int window = i - (monk_strike_frames - parry_window);
+                parry_window_open = window >= 0;
+                monk.set_flash(window >= 0 && window < cue_frames ? 100 : 0);
+
                 if(bn::keypad::r_pressed() && ! blocking)
                 {
                     if(i >= monk_strike_frames - parry_window)
@@ -281,6 +297,8 @@ namespace
             }
 
             monk.set_offset(0, 0);
+            monk.set_flash(0);
+            parry_window_open = 0;
 
             if(parried)
             {
@@ -293,7 +311,11 @@ namespace
 
                 for(int i = 0; i < 30; ++i)
                 {
-                    tick(view, hands, i < 6 ? ((i & 1) ? 1 : -1) : 0);
+                    // The clash: a white flash over everything, and a jolt.
+                    bn::fixed flash = i < parry_flash_frames ? 1 : 0;
+                    bn::bg_palettes::set_fade(bn::colors::white, flash);
+                    bn::sprite_palettes::set_fade(bn::colors::white, flash);
+                    tick(view, hands, i < 8 ? ((i & 1) ? 3 : -3) : 0);
                 }
             }
             else
