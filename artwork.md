@@ -11,10 +11,11 @@ to grey mush.
 1. Create a ChatGPT Project named **SEPTEM**.
 2. Paste the **Project instructions** block below into the project's
    instructions. Every chat in the project then inherits the style.
-3. Generate each asset in its own chat with the prompt from its section.
-4. When you get one you like, upload it back into the next chats as a
-   **style reference** ("match the line work of the attached image"). This keeps
-   the set consistent.
+3. Build the **reference library** first (see below): a style anchor, then one
+   anchor per character. Each image you approve goes into the project's files
+   (its sources) under a fixed `REF_` name, so every later chat can follow it.
+4. Generate each asset in its own chat with the prompt from its section,
+   **attaching the references listed for it**.
 5. Put the results in `assets/raw/` in the repo with the file name given for
    each asset. I'll reduce them to 3 colours and GBA size, clean the pixels up and
    wire them into the game.
@@ -55,12 +56,136 @@ gradients, 3D render, photorealism, lens effects, bloom, excessive ornament,
 filigree for its own sake, random small details, text, letters, signatures,
 watermarks, frames or borders (unless asked).
 
+REFERENCES (the project's files)
+- Files named REF_*.png in this project are approved SEPTEM art. They are the
+  canon: match them before anything written here.
+- REF_style_*: match their line weight, line spacing, amount of solid black,
+  and how light falls. Do not copy their composition or subject.
+- REF_char_* and REF_place_*: the approved design of a character or place.
+  Keep its proportions, silhouette, costume, props and face exactly; change
+  only the pose, angle or framing the prompt asks for.
+- SEPTEM_canon.md lists every reference and the traits that must not change.
+  Follow it.
+- When images are attached to a message, they take priority over project
+  files. If a prompt names a REF_ file that is not attached, use the project
+  file of that name.
+- Never mix two characters' designs. Never invent a new design for a
+  character that already has a REF_char_ file.
+
 OUTPUT
 - Square or 3:2 as asked, PNG.
 - Cut-outs: the subject alone on a fully transparent background, nothing
   touching the edges unless asked, a clean closed black outline around it.
 - Never add colour beyond black, white and the requested blood red.
 ```
+
+---
+
+## Reference library
+
+Consistency comes from approved images, not from longer prompts. Every image
+you approve becomes a reference that the following ones must match.
+
+### Naming
+
+| Kind | File name | What it fixes |
+|---|---|---|
+| Style anchor | `REF_style_01.png`, `REF_style_02.png` | Line weight, spacing, black density, lighting. Two or three in total, no more. |
+| Character | `REF_char_monk.png`, `REF_char_sloth.png`, `REF_char_gauntlet.png`, `REF_char_arm.png` | The design of one character or prop, in its neutral pose |
+| Place | `REF_place_abbey.png` | The architecture and mood of a stage |
+| The canon | `SEPTEM_canon.md` | A text file listing the references and their fixed traits |
+
+### Build it in this order
+
+1. **Style anchor.** Generate the corridor reference shot (2e) and the title
+   (1). Iterate until one is exactly right, then save it as
+   `REF_style_01.png` and upload it to the project's files. A second anchor
+   with a figure in it (the Somnolent Monk idle, 4a) makes `REF_style_02.png`.
+2. **Characters.** For each character, generate the idle or neutral pose with
+   `REF_style_01` attached. When it's right, save it as `REF_char_<name>.png`
+   and upload it. Every other pose of that character is then made from it.
+3. **Places.** The stage card (2a) becomes `REF_place_abbey.png`; the shrine
+   and textures of that stage use it.
+4. After each approval, add a line to `SEPTEM_canon.md` and re-upload it.
+
+### Attach the references in the chat too
+
+Image generation does not always look at project files on its own, so the
+reliable way is to **attach the listed references to the message** each time,
+as well as keeping them in the project files. Attach at most three: the style
+anchor, plus the character or place reference.
+
+### The approval prompt
+
+When an image is right, before saving it, ask in the same chat:
+
+```
+This image is approved as canon for SEPTEM. In 5 to 8 short bullet points,
+list the traits that must stay identical in every future image of this
+character / place / style (silhouette, proportions, costume, props, face,
+line weight, black density, light direction). No commentary.
+```
+
+Paste the answer into `SEPTEM_canon.md` under the reference's name.
+
+### SEPTEM_canon.md template
+
+Start the file with this, then fill it in as you approve images:
+
+```
+# SEPTEM canon: approved references
+
+All images: Doré wood engraving, bold coarse lines, black and white only,
+blood red #D00024 only where named.
+
+## REF_style_01 (corridor)
+- (traits from the approval prompt)
+
+## REF_char_monk (Somnolent Monk, idle)
+- (traits from the approval prompt)
+```
+
+### Which references each asset uses
+
+| Asset | Attach |
+|---|---|
+| 1 Title, 2a Stage card, 6 Shrine, 7 Death screen | `REF_style_01`, `REF_place_abbey` (once it exists) |
+| 2b–2d Textures | `REF_style_01`, `REF_place_abbey` |
+| 2e Corridor shot | — (it becomes `REF_style_01`) |
+| 3a Gauntlet | `REF_style_01` → approve as `REF_char_gauntlet` |
+| 3b Arm with sword | `REF_style_01`, `REF_char_gauntlet` (same hands) → approve as `REF_char_arm` |
+| 3c Strike poses | `REF_style_01`, `REF_char_arm` |
+| 4a Monk idle | `REF_style_01` → approve as `REF_char_monk` (and `REF_style_02`) |
+| 4a Monk poses | `REF_style_02`, `REF_char_monk` |
+| 4b Moth-Wraith, 4c Chained Sleeper | `REF_style_02` → approve as `REF_char_wraith` / `REF_char_sleeper`, then their poses with those |
+| 5 Sloth | `REF_style_02`, `REF_place_abbey` → approve as `REF_char_sloth`, then its poses with it |
+| 8 Small graphics | `REF_style_01`, plus `REF_char_gauntlet` for the gem |
+
+### Lines to start a prompt with
+
+New design, following the style:
+
+```
+Attached: REF_style_01 (style only). Match its line weight, line spacing,
+black density and lighting exactly. Do not copy its composition or subject.
+```
+
+A new pose of an approved character:
+
+```
+Attached: REF_style_02 (style) and REF_char_monk (design). This is the same
+character: keep the proportions, silhouette, costume, props and face
+identical, as listed in SEPTEM_canon.md. Change only the pose described below.
+```
+
+### When it drifts anyway
+
+- Re-attach the references and say:
+  `Compare your image with the attached references and redraw it so the line weight, line spacing and design match them exactly.`
+- If a chat keeps drifting, start a fresh chat in the project: long chats
+  slowly lose the style.
+- Don't approve "nearly right" images as references: their errors get copied
+  into everything after them.
 
 ---
 
@@ -76,12 +201,14 @@ Paste these at the end of any prompt when a result drifts:
   `Remove small ornaments and incidental details. Keep only the large forms and the light.`
 - **Red spreading:**
   `Blood red #D00024 only where I asked; everything else strictly black and white.`
+- **Character changing design:**
+  `Keep the character exactly as in the attached REF_char image: same proportions, costume, props and face. Change only the pose.`
 
 ---
 
 ## 1. Title screen
 
-`assets/raw/title.png` · 3:2 landscape · full scene
+`assets/raw/title.png` · 3:2 landscape · full scene · attach `REF_style_01`
 
 ```
 Title screen for SEPTEM. A colossal ruined gothic cathedral nave seen from the
@@ -97,7 +224,7 @@ black. 3:2 landscape, bold coarse engraving lines, pure black and white only.
 
 ### 2a. Stage card
 
-`assets/raw/sloth_card.png` · 3:2 landscape · full scene
+`assets/raw/sloth_card.png` · 3:2 landscape · full scene · attach `REF_style_01` · approve as `REF_place_abbey`
 
 ```
 Stage card for "Sloth: the Drowned Abbey". The flooded interior of a
@@ -110,7 +237,7 @@ beam of light from a narrow lancet window. Stillness, dread, heaviness.
 
 ### 2b. Wall texture: ashlar stone
 
-`assets/raw/wall_stone.png` · square · flat, front-on, seamless
+`assets/raw/wall_stone.png` · attach `REF_style_01`, `REF_place_abbey` · square · flat, front-on, seamless
 
 ```
 A flat, front-on, seamlessly tileable texture of an ancient abbey wall: large
@@ -123,7 +250,7 @@ tile. Square, pure black and white only.
 
 ### 2c. Wall texture: lancet window
 
-`assets/raw/wall_window.png` · square · flat, front-on
+`assets/raw/wall_window.png` · attach `REF_style_01`, `REF_place_abbey` · square · flat, front-on
 
 ```
 The same abbey stone wall, front-on and flat, with one tall narrow pointed
@@ -136,7 +263,7 @@ and white only.
 
 ### 2d. Floor: still flood water
 
-`assets/raw/floor_water.png` · square · flat, seen from above
+`assets/raw/floor_water.png` · attach `REF_style_01`, `REF_place_abbey` · square · flat, seen from above
 
 ```
 Seen from directly above: still black flood water over a stone floor. Drawn
@@ -149,7 +276,9 @@ no perspective. Square, pure black and white only.
 
 `assets/raw/corridor_ref.png` · 3:2 landscape · full scene
 
-This one is a look-and-feel reference for the 3D view, not a game asset.
+This one is a look-and-feel reference for the 3D view, not a game asset. Make
+it first: once approved it becomes `REF_style_01`, the style anchor for
+everything else.
 
 ```
 First-person view down a narrow flooded corridor of a gothic abbey, eye level
@@ -167,7 +296,7 @@ placed in the bottom corners of the screen.
 
 ### 3a. Left gauntlet with the three mana gems
 
-`assets/raw/gauntlet.png` · square · cut-out
+`assets/raw/gauntlet.png` · square · cut-out · attach `REF_style_01` · approve as `REF_char_gauntlet`
 
 ```
 Cut-out: a left hand in a battered medieval plate gauntlet, seen from the
@@ -189,7 +318,7 @@ black hollows with a thin white rim. No red at all.
 
 ### 3b. Right arm with sword and death brand
 
-`assets/raw/arm_sword.png` · square · cut-out
+`assets/raw/arm_sword.png` · square · cut-out · attach `REF_style_01`, `REF_char_gauntlet` · approve as `REF_char_arm`
 
 ```
 Cut-out: a right forearm and fist seen from the wearer's own point of view,
@@ -207,7 +336,7 @@ transparent background.
 
 `assets/raw/strike_1.png` … `strike_4.png` · square · cut-out, same arm as 3b
 
-Attach `arm_sword.png` as the reference for all four.
+Attach `REF_style_01` and `REF_char_arm` for all four.
 
 ```
 Same right arm and longsword as the attached image, same style. Pose 1 of a
@@ -238,11 +367,13 @@ centre-right, returning to guard. Transparent background, black and white only.
 
 Enemies are seen face-on, filling most of the view during a duel. For each one:
 an idle pose, a wind-up, a strike, a staggered pose (after you parry), and a
-death. Make the idle pose first, then attach it as the reference for the others.
+death. Make the idle pose first with `REF_style_02` (or `REF_style_01` for
+the monk, the first figure); approve it as `REF_char_<name>`, then make every
+other pose with that file attached.
 
 ### 4a. Somnolent Monk
 
-`assets/raw/monk_idle.png`, `monk_windup.png`, `monk_strike.png`, `monk_stagger.png`, `monk_death.png` · square · cut-out
+`assets/raw/monk_idle.png`, `monk_windup.png`, `monk_strike.png`, `monk_stagger.png`, `monk_death.png` · square · cut-out · idle: attach `REF_style_01`, approve as `REF_char_monk` and `REF_style_02`
 
 ```
 Cut-out, full figure, facing the viewer: a SOMNOLENT MONK, an undead monk who
@@ -255,7 +386,7 @@ Pure black and white, transparent background, the hem of the robe reaching the
 bottom edge.
 ```
 
-Poses (attach `monk_idle.png`):
+Poses (attach `REF_style_02` and `REF_char_monk`):
 
 ```
 Same Somnolent Monk. WIND-UP: he lifts the iron censer slowly overhead with
@@ -283,7 +414,7 @@ cowl is the only colour. Same framing, transparent background.
 
 ### 4b. Moth-Wraith
 
-`assets/raw/wraith_idle.png` (+ windup / strike / stagger / death) · square · cut-out
+`assets/raw/wraith_idle.png` (+ windup / strike / stagger / death) · square · cut-out · attach `REF_style_02` · approve as `REF_char_wraith`
 
 ```
 Cut-out: a MOTH-WRAITH, a gaunt, almost weightless phantom of a nun whose torn
@@ -296,7 +427,7 @@ Pure black and white, transparent background.
 
 ### 4c. Chained Sleeper
 
-`assets/raw/sleeper_idle.png` (+ windup / strike / stagger / death) · square · cut-out
+`assets/raw/sleeper_idle.png` (+ windup / strike / stagger / death) · square · cut-out · attach `REF_style_02` · approve as `REF_char_sleeper`
 
 ```
 Cut-out: a CHAINED SLEEPER, a gigantic emaciated penitent bound to a broken
@@ -309,7 +440,7 @@ background, the pillar base at the bottom edge.
 
 ## 5. Boss: SLOTH
 
-`assets/raw/sloth_idle.png` (+ the poses below) · square or 3:2 · cut-out
+`assets/raw/sloth_idle.png` (+ the poses below) · square or 3:2 · cut-out · attach `REF_style_02`, `REF_place_abbey` · approve as `REF_char_sloth`
 
 ```
 Cut-out, boss: SLOTH, the first of the Seven Sins. A colossal bloated figure,
@@ -323,7 +454,7 @@ light only on the brow, the crown and the hanging hand. Pure black and white,
 transparent background.
 ```
 
-Poses (attach `sloth_idle.png`):
+Poses (attach `REF_style_02` and `REF_char_sloth`):
 
 ```
 Same SLOTH. SLOW WIND-UP: the hanging arm rises from the water with agonising
@@ -352,7 +483,7 @@ background.
 
 ## 6. Shrine (end of the stage)
 
-`assets/raw/shrine.png` · 3:2 landscape · full scene
+`assets/raw/shrine.png` · 3:2 landscape · full scene · attach `REF_style_01`, `REF_place_abbey`
 
 ```
 The shrine at the end of the Drowned Abbey: a small apse with a stone altar
@@ -365,7 +496,7 @@ pure black and white only.
 
 ## 7. Death screen
 
-`assets/raw/death.png` · 3:2 landscape · full scene
+`assets/raw/death.png` · 3:2 landscape · full scene · attach `REF_style_01`, `REF_char_arm`
 
 ```
 Death screen: the lost soul lies face down in the black flood water, arms out,
@@ -379,7 +510,7 @@ top half empty black. 3:2 landscape.
 
 ### 8a. Mana gem, close-up
 
-`assets/raw/gem.png` · square · cut-out
+`assets/raw/gem.png` · square · cut-out · attach `REF_style_01`, `REF_char_gauntlet`
 
 ```
 Cut-out: a single cabochon gem in a heavy black iron bezel, the stone flat blood
@@ -389,7 +520,7 @@ readable at 16 pixels. Transparent background.
 
 ### 8b. Health vial
 
-`assets/raw/vial.png` · square · cut-out
+`assets/raw/vial.png` · square · cut-out · attach `REF_style_01`
 
 ```
 Cut-out: a small medieval glass vial of blessed blood, stoppered with wax,
@@ -400,7 +531,7 @@ glass drawn in black engraved lines with sharp white highlights. Readable at
 
 ### 8c. Seven Sins sigils (for the stage select and boss doors)
 
-`assets/raw/sigil_sloth.png` (then pride, greed, wrath, envy, gluttony, lust) · square · cut-out
+`assets/raw/sigil_sloth.png` (then pride, greed, wrath, envy, gluttony, lust) · square · cut-out · attach `REF_style_01`; approve the first as `REF_char_sigil` and attach it for the other six
 
 ```
 Cut-out: a heraldic sigil for the sin of SLOTH, carved in stone like a relief on
@@ -410,6 +541,12 @@ background, readable at 32 pixels.
 ```
 
 ---
+
+## What to send me
+
+Put each final image in `assets/raw/` under its asset name (not the `REF_`
+name). The `REF_` files are for ChatGPT; you can also commit them to
+`assets/refs/` so the canon is kept with the game.
 
 ## What happens to your images
 
