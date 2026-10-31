@@ -1,12 +1,12 @@
 // Dumps each BG layer via the MCP view_vram tool to tests/out/layers_*.png.
 import path from 'node:path';
+import { harness, root } from '../tools/paths.mjs';
 import { writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
+import { pathToFileURL } from 'node:url';
 const require = createRequire(path.join(harness, 'package.json'));
-const { Client } = await import(require.resolve('@modelcontextprotocol/sdk/client/index.js'));
-const { StdioClientTransport } = await import(require.resolve('@modelcontextprotocol/sdk/client/stdio.js'));
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+const { Client } = await import(pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/index.js')).href);
+const { StdioClientTransport } = await import(pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/stdio.js')).href);
 const client = new Client({ name: 'septem-tests', version: '1.0.0' });
 await client.connect(new StdioClientTransport({ command: 'node', args: [path.join(harness, 'mcp-server.mjs')], env: { ...process.env, GBTEST_ROOT: root } }));
 await client.callTool({ name: 'load_rom', arguments: { path: 'septem.gba' } });

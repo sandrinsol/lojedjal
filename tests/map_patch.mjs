@@ -1,11 +1,10 @@
 // Patches a test map into septem.gba with web/septem-map.js (as the editor
 // does) and checks in the harness that the game starts where the map says.
 import path from 'node:path';
+import { importHarness, root } from '../tools/paths.mjs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import vm from 'node:vm';
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
-const { EmuHarness } = await import(path.join(harness, 'driver.mjs'));
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+const { EmuHarness } = await importHarness('driver.mjs');
 const ctx = { window: {} };
 vm.runInNewContext(await readFile(path.join(root, 'web', 'septem-map.js'), 'utf8'), ctx);
 const M = ctx.window.SeptemMap;

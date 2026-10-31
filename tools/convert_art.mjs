@@ -3,15 +3,13 @@
 // graphics/, using the gb-gbc-gba-test-mcp harness converters (the same code
 // as its `sprite` and `background` MCP tools).
 //
-// GBTEST_HARNESS points at the harness folder of a gb-gbc-gba-test-mcp clone.
+// The gb-gbc-gba-test-mcp clone is found as described in tools/paths.mjs.
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
+import { importHarness, root } from './paths.mjs';
 
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
-const { convertSprite, writeSpriteSource } = await import(path.join(harness, 'sprite.mjs'));
-const { convertBackground, writeBackgroundSource } = await import(path.join(harness, 'background.mjs'));
-
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+const { convertSprite, writeSpriteSource } = await importHarness('sprite.mjs');
+const { convertBackground, writeBackgroundSource } = await importHarness('background.mjs');
 const asset = (f) => path.join(root, 'assets', f);
 const out = (f) => path.join(root, 'graphics', f);
 
@@ -19,7 +17,7 @@ const ALLOWED = new Set(['0,0,0', '255,255,255', '208,0,36']);
 
 // Strict palette: black, white and blood red only (plus transparency).
 async function checkPalette(file) {
-  const { decodePng } = await import(path.join(harness, 'png.mjs'));
+  const { decodePng } = await importHarness('png.mjs');
   const img = decodePng(await readFile(file));
   for (let i = 0; i < img.width * img.height; i++) {
     const o = i * img.channels;

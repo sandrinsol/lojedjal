@@ -1,12 +1,12 @@
 // Starts the gb-gbc-gba-test MCP server and calls its tools on SEPTEM:
 // load_rom, run_sequence (title -> walk), check (hardware rules), describe.
 import path from 'node:path';
+import { harness, root } from '../tools/paths.mjs';
 import { createRequire } from 'node:module';
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
+import { pathToFileURL } from 'node:url';
 const require = createRequire(path.join(harness, 'package.json'));
-const { Client } = await import(require.resolve('@modelcontextprotocol/sdk/client/index.js'));
-const { StdioClientTransport } = await import(require.resolve('@modelcontextprotocol/sdk/client/stdio.js'));
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+const { Client } = await import(pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/index.js')).href);
+const { StdioClientTransport } = await import(pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/stdio.js')).href);
 
 const transport = new StdioClientTransport({
   command: 'node', args: [path.join(harness, 'mcp-server.mjs')],

@@ -3,9 +3,8 @@
 // and the perfect parry (meeting, clash, turned aside). Screenshots go to
 // tests/out/anim_*.png. Exits non-zero on a failed check.
 import path from 'node:path';
-const harness = process.env.GBTEST_HARNESS ?? '/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness';
-const { EmuHarness } = await import(path.join(harness, 'driver.mjs'));
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+import { importHarness, root } from '../tools/paths.mjs';
+const { EmuHarness } = await importHarness('driver.mjs');
 const shot = (emu, n) => emu.screenshot(path.join(root, 'tests', 'out', `anim_${n}.png`));
 let failures = 0;
 const expect = (label, ok, got) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${got !== undefined ? ` (${JSON.stringify(got)})` : ''}`); if (!ok) failures++; };

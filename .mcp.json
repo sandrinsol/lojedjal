@@ -2,7 +2,7 @@
   "mcpServers": {
     "gb-gbc-gba-test": {
       "command": "node",
-      "args": ["/home/user/sandrinsol/gb-gbc-gba-test-mcp/harness/mcp-server.mjs"],
+      "args": ["${GBTEST_REPO:-../gb-gbc-gba-test-mcp}/harness/mcp-server.mjs"],
       "env": { "GBTEST_ROOT": "." }
     }
   }
