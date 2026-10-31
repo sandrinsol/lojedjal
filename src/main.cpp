@@ -10,9 +10,9 @@
 // taken in turns:
 //   your turn   A strike, B drink a vial, L cast WARD (one gem)
 //   his turn    he raises the censer, holds it for a slow, uneven time, then
-//               brings it down: press R in the last moments before the blow
-//               lands to parry. A parry staggers him; your next strike lands
-//               twice as hard. Pressing too early is a flinch: the blow lands.
+//               brings it down. R blocks: the blow lands for 1 instead of 3.
+//               R in the last moments before impact is a perfect parry: no
+//               damage, he staggers, and your next strike lands twice as hard.
 // Dying brands the forearm and restarts the stage: every monk stands again.
 //
 // The globals below are read by name by the gb-gbc-gba-test harness
@@ -44,7 +44,7 @@ volatile int arm_pose = 0;
 volatile int duel_state = 0;    // see duel_states below
 volatile int enemy_hp = 0;
 volatile int ward_turns = 0;    // enemy blows still softened by WARD
-volatile int last_defence = 0;  // 0 none, 1 parried, 2 hit, 3 flinched (too early)
+volatile int last_defence = 0;  // 0 none, 1 perfect parry, 2 hit, 3 blocked
 volatile int parries = 0;       // successful parries, for tests
 volatile unsigned frame_counter = 0;
 volatile int cpu_usage = 0;
@@ -69,11 +69,12 @@ namespace
     // The Somnolent Monk.
     constexpr int monk_hp = 4;
     constexpr int monk_damage = 3;          // four blows kill
-    constexpr int monk_warded_damage = 1;
+    constexpr int monk_warded_damage = 1;   // WARD alone; WARD and a block: none
+    constexpr int monk_blocked_damage = 1;
     constexpr int monk_windup_min = 30;     // frames he holds the censer up:
-    constexpr int monk_windup_max = 90;     // slow and uneven, to bait a flinch
+    constexpr int monk_windup_max = 90;     // slow and uneven, to bait an early block
     constexpr int monk_strike_frames = 18;  // the censer falling
-    constexpr int parry_window = 10;        // the last frames before impact
+    constexpr int parry_window = 10;        // the last frames before impact: a perfect parry
 
     constexpr int vial_heal = 6;
     constexpr int ward_length = 2;
@@ -232,7 +233,9 @@ namespace
             duel_state = ENEMY_WINDUP;
             monk.show_duel(pose::WINDUP);
 
-            bool flinched = false;
+            // R decides on its first press: in the last frames before impact
+            // it is a perfect parry; any earlier it raises the blade to block.
+            bool blocking = false;
             bool parried = false;
             int hold = rng.get_int(monk_windup_min, monk_windup_max + 1);
 
@@ -240,7 +243,12 @@ namespace
             {
                 if(bn::keypad::r_pressed())
                 {
-                    flinched = true;
+                    blocking = true;
+                }
+
+                if(blocking)
+                {
+                    hands.guard(2);
                 }
 
                 tick(view, hands);
@@ -251,7 +259,7 @@ namespace
 
             for(int i = 0; i < monk_strike_frames && ! parried; ++i)
             {
-                if(bn::keypad::r_pressed() && ! flinched)
+                if(bn::keypad::r_pressed() && ! blocking)
                 {
                     if(i >= monk_strike_frames - parry_window)
                     {
@@ -259,8 +267,13 @@ namespace
                     }
                     else
                     {
-                        flinched = true;
+                        blocking = true;
                     }
+                }
+
+                if(blocking)
+                {
+                    hands.guard(2);
                 }
 
                 monk.set_offset(0, i / 3);
@@ -285,8 +298,16 @@ namespace
             }
             else
             {
-                last_defence = flinched ? 3 : 2;
-                set_hp(hp - (ward_turns > 0 ? monk_warded_damage : monk_damage));
+                last_defence = blocking ? 3 : 2;
+                int damage = blocking ? monk_blocked_damage : monk_damage;
+
+                if(ward_turns > 0)
+                {
+                    // WARD softens an open blow and turns a blocked one aside.
+                    damage = blocking ? 0 : monk_warded_damage;
+                }
+
+                set_hp(hp - damage);
                 hands.refresh();
 
                 for(int i = 0; i < 14; ++i)

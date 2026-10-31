@@ -36,7 +36,7 @@ await emu.until('duel_state', ENEMY_STRIKE, 200);
 await emu.waitFrames(12);               // into the last 10 frames of the 18-frame blow
 await emu.tap('R', 1, 0);
 await emu.waitFrames(2); await shot(emu, '5_parried');
-expect('timed R parries', await emu.v('last_defence') === 1 && await emu.v('hp') === 12, { def: await emu.v('last_defence'), hp: await emu.v('hp') });
+expect('R in the last frames is a perfect parry', await emu.v('last_defence') === 1 && await emu.v('hp') === 12, { def: await emu.v('last_defence'), hp: await emu.v('hp') });
 
 await emu.until('duel_state', PLAYER_TURN, 200);
 await emu.tap('A');
@@ -45,15 +45,16 @@ expect('riposte after a parry hits twice as hard', await emu.v('enemy_hp') === 1
 
 await emu.until('duel_state', ENEMY_STRIKE, 200);
 await emu.waitFrames(3); await shot(emu, '6_blow_falls');
-await emu.tap('R', 1, 0);               // too early: a flinch
+await emu.tap('R', 1, 0);               // too early for a parry: a block
 await emu.until('duel_state', PLAYER_TURN, 200);
-expect('an early R is a flinch and the blow lands', await emu.v('last_defence') === 3 && await emu.v('hp') === 9, { def: await emu.v('last_defence'), hp: await emu.v('hp'), wounds: await emu.v('wounds') });
+expect('an early R blocks: the blow lands for 1', await emu.v('last_defence') === 3 && await emu.v('hp') === 11, { def: await emu.v('last_defence'), hp: await emu.v('hp'), wounds: await emu.v('wounds') });
 await shot(emu, '7_wounded');
 
 await emu.tap('B');
 await emu.until('duel_state', ENEMY_WINDUP, 200);
 expect('a vial heals and is used up', await emu.v('hp') === 12 && await emu.v('vials') === 2, { hp: await emu.v('hp'), vials: await emu.v('vials') });
 await emu.until('duel_state', PLAYER_TURN, 300);
+expect('no R: the blow lands in full', await emu.v('last_defence') === 2 && await emu.v('hp') === 9, { def: await emu.v('last_defence'), hp: await emu.v('hp') });
 await emu.tap('A');
 await emu.until('duel_state', 0, 300);
 expect('the monk falls', await emu.v('enemy_hp') <= 0 && await emu.v('game_state') === 1);
@@ -73,6 +74,11 @@ await emu.until('duel_state', ENEMY_WINDUP, 200);
 expect('WARD spends a gem', await emu.v('gems') === 2 && await emu.v('ward_turns') === 2);
 await emu.until('duel_state', PLAYER_TURN, 300);
 expect('WARD softens the blow', await emu.v('hp') === 11, await emu.v('hp'));
+await emu.tap('A');
+await emu.until('duel_state', ENEMY_WINDUP, 200);
+await emu.tap('R', 1, 0);               // block while WARD still holds
+await emu.until('duel_state', PLAYER_TURN, 300);
+expect('WARD and a block: no damage', await emu.v('hp') === 11 && await emu.v('last_defence') === 3, { hp: await emu.v('hp'), def: await emu.v('last_defence') });
 await emu.writeU32('hp', 1);
 await emu.tap('A');
 await emu.until('duel_state', 7, 400);   // dying
