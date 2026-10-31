@@ -84,8 +84,8 @@ Everything is shown through the body and the world:
 | Monk blow | 3 damage; 1 blocked or under WARD; 0 blocked under WARD |
 | Monk health | 4; a strike deals 1, a riposte after a parry 2 |
 | Monk wind-up | holds the censer 30–90 frames (uneven, to bait an early block) |
-| The blow | 18 frames falling. R in the last 10 is a perfect parry: no damage, he staggers. R any earlier (or held) blocks |
-| Parry cue | As the last 10 frames begin, the monk turns pure white for 4 frames; a perfect parry turns the whole screen white for 3 |
+| The blow | 28 frames falling. R in the last 20 is a perfect parry: no damage, he staggers. R any earlier (or held) blocks |
+| Parry cue | As the last 20 frames begin, the monk turns pure white for 4 frames; a perfect parry turns the whole screen white for 3 |
 | Vial | +6 health, takes your turn (3 per life) |
 | WARD | 1 gem, softens the next 2 blows |
 
