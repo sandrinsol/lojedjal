@@ -7,4 +7,3 @@ sizes; the files here stay untouched.
 - `monk_idle.png` is the monk's idle pose (on a black background).
   `monk_idle_v1.png` is an earlier idle pose whose design doesn't match the other
   monk poses; kept for reference only.
-- Still to add as files: the Chained Sleeper's strike and death.
