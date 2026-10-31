@@ -33,8 +33,10 @@ await emu.until('duel_state', ENEMY_WINDUP, 200);
 expect('strike hurts him', await emu.v('enemy_hp') === 3, await emu.v('enemy_hp'));
 await emu.waitFrames(10); await shot(emu, '4_windup');
 await emu.until('duel_state', ENEMY_STRIKE, 200);
-await emu.waitFrames(12);               // into the last 10 frames of the 18-frame blow
-await emu.tap('R', 1, 0);
+expect('no cue before the parry window', await emu.v('parry_window_open') === 0);
+expect('the cue: the window opens late in the blow', (await emu.until('parry_window_open', 1, 30)).met);
+await emu.waitFrames(2); await shot(emu, '5a_cue');
+await emu.tap('R', 1, 0);               // on the cue (2 frames in)
 await emu.waitFrames(2); await shot(emu, '5_parried');
 expect('R in the last frames is a perfect parry', await emu.v('last_defence') === 1 && await emu.v('hp') === 12, { def: await emu.v('last_defence'), hp: await emu.v('hp') });
 

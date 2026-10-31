@@ -31,6 +31,9 @@ namespace septem
         void show_duel(pose p);
         void hide_duel();
 
+        // Flashes the duel figure towards white (0 = none, 100 = all white).
+        void set_flash(int percent);
+
         // Nudges the duel figure (lurching blows, sinking in death).
         void set_offset(int x, int y);
 
