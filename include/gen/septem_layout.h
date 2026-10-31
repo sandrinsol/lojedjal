@@ -6,8 +6,30 @@ namespace septem::gen
 {
     // Screen positions measured from the art: the gauntlet's three gems and
     // the centre of the brand on the right forearm.
-    constexpr int gem_x[3] = { 30, 42, 57 };
+    constexpr int gem_x[3] = { 30, 42, 56 };
     constexpr int gem_y[3] = { 102, 99, 102 };
+    constexpr int left_frames = 7;
+
+    // The gems in every left-hand frame (0 the gauntlet, 1..4 the flask held
+    // with 0..3 draughts left, 5 drinking, 6 the last draught gone).
+    constexpr int left_gem_x[7][3] = {
+        { 30, 42, 56 },
+        { 1, 9, 23 },
+        { 1, 9, 23 },
+        { 1, 9, 22 },
+        { 1, 9, 23 },
+        { 10, 20, 34 },
+        { 10, 20, 34 }
+    };
+    constexpr int left_gem_y[7][3] = {
+        { 102, 99, 102 },
+        { 86, 78, 74 },
+        { 86, 78, 74 },
+        { 86, 78, 74 },
+        { 86, 78, 74 },
+        { 105, 94, 88 },
+        { 105, 94, 88 }
+    };
     constexpr int brand_x = 204;
     constexpr int brand_y = 122;
 }

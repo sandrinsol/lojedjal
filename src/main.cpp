@@ -8,7 +8,7 @@
 //
 // Somnolent Monks stand on the map. Stepping in front of one starts a duel,
 // taken in turns:
-//   your turn   A strike, B drink a vial, L cast WARD (one gem)
+//   your turn   A strike, B drink from the flask (3 draughts), L cast WARD (one gem)
 //   his turn    he raises the censer, holds it for a slow, uneven time, then
 //               brings it down. R blocks: the blow lands for 1 instead of 3.
 //               R in the last moments before impact is a perfect parry: no
@@ -45,6 +45,7 @@ volatile int vials = septem::max_vials;
 volatile int deaths = 0;
 volatile int game_state = 0;
 volatile int arm_pose = 0;
+volatile int left_pose = 0;
 volatile int duel_state = 0;    // see duel_states below
 volatile int enemy_hp = 0;
 volatile int ward_turns = 0;    // enemy blows still softened by WARD
@@ -89,6 +90,8 @@ namespace
     constexpr int parry_flash_frames = 3;
 
     constexpr int vial_heal = 6;
+    constexpr int flask_hold_frames = 24;
+    constexpr int flask_drink_frames = 30;
     constexpr int ward_length = 2;
 
     bn::random rng;
@@ -226,10 +229,24 @@ namespace
             }
             else if(action == 2)
             {
+                // Lift the flask, drink a draught, and see what is left.
+                hands.show_left(1 + vials);
+                wait(view, hands, flask_hold_frames);
+                hands.show_left(5);
+                wait(view, hands, flask_drink_frames);
                 vials = vials - 1;
                 set_hp(hp + vial_heal);
                 hands.refresh();
-                wait(view, hands, 30);
+
+                if(vials == 0)
+                {
+                    hands.show_left(6);
+                    wait(view, hands, flask_drink_frames / 2);
+                }
+
+                hands.show_left(1 + vials);
+                wait(view, hands, flask_hold_frames);
+                hands.show_left(0);
             }
             else
             {
@@ -306,7 +323,7 @@ namespace
                 parries = parries + 1;
                 riposte = true;
                 duel_state = ENEMY_STAGGERED;
-                hands.guard(14);
+                hands.parry();
                 monk.show_duel(pose::STAGGER);
 
                 for(int i = 0; i < 30; ++i)
@@ -331,6 +348,11 @@ namespace
 
                 set_hp(hp - damage);
                 hands.refresh();
+
+                if(blocking)
+                {
+                    hands.block_impact();
+                }
 
                 for(int i = 0; i < 14; ++i)
                 {

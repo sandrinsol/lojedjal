@@ -36,7 +36,7 @@ and run `make map` (or send the text to Claude to commit). Map text:
 | `assets/raw/`, `assets/refs/` | Generated source artwork and the style references |
 | `tools/convert_art.mjs` | PNG → Butano `.bmp`/`.json` via the gb-gbc-gba-test-mcp converters (rejects any colour outside the palette) |
 | `assets/` → `graphics/` | Generated art → Butano imports |
-| `tests/` | Harness scripts: `play.mjs` (walkthrough), `strike.mjs` (sword swing), `duel.mjs` (fights the monk: perfect parry, riposte, block, vial, WARD, death and reset), `mcp_check.mjs` (MCP `check` + `describe`), `vram_overlap.mjs` (reads every BG map to rule out real VRAM overlaps), `map_patch.mjs` (patches a map in as the editor does and checks the start) |
+| `tests/` | Harness scripts: `play.mjs` (walkthrough), `strike.mjs` (sword swing), `duel.mjs` (fights the monk: perfect parry, riposte, block, vial, WARD, death and reset), `hands_anim.mjs` (flask, block and parry frames), `mcp_check.mjs` (MCP `check` + `describe`), `vram_overlap.mjs` (reads every BG map to rule out real VRAM overlaps), `map_patch.mjs` (patches a map in as the editor does and checks the start) |
 | `maps/` | Map text files; `tools/build_map.py` turns one into the ROM map block |
 | `web/` | Static player site (EmulatorJS + mGBA) and the map editor, deployed to Vercel |
 
