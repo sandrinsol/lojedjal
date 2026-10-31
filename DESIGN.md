@@ -59,13 +59,15 @@ Everything is shown through the body and the world:
 
 - The enemy fills the view, and you and it take turns.
 - On the enemy's turn it shows a wind-up, then strikes, using engraving poses.
-  **Press R in time to parry.** Mistime it and you take the hit.
+  **R blocks** (the blow lands for 1 instead of 3). **R in the last moments
+  before impact is a perfect parry**: no damage, he staggers, and your next
+  strike lands twice as hard.
 - **Controls during a duel** (no menus):
 
 | Button | Action |
 |--------|--------|
 | A | Strike (right hand) |
-| R | Parry (timed) |
+| R | Block; a perfect parry when timed |
 | B | Drink a health vial |
 | L | Cast the equipped spell |
 
@@ -79,10 +81,10 @@ Everything is shown through the body and the world:
 | | |
 |---|---|
 | Player health | 12; the red vignette deepens every 3 lost (4 monk blows kill) |
-| Monk blow | 3 damage, 1 under WARD |
+| Monk blow | 3 damage; 1 blocked or under WARD; 0 blocked under WARD |
 | Monk health | 4; a strike deals 1, a riposte after a parry 2 |
-| Monk wind-up | holds the censer 30–90 frames (uneven, to bait a flinch) |
-| The blow | 18 frames falling; R parries in the last 10; R earlier is a flinch |
+| Monk wind-up | holds the censer 30–90 frames (uneven, to bait an early block) |
+| The blow | 18 frames falling. R in the last 10 is a perfect parry: no damage, he staggers. R any earlier (or held) blocks |
 | Vial | +6 health, takes your turn (3 per life) |
 | WARD | 1 gem, softens the next 2 blows |
 
